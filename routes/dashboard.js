@@ -97,47 +97,6 @@ router.get('/stats', auth, async (req, res) => {
     }
 });
 
-// @route   GET /api/dashboard/student-stats
-// @desc    Get student-specific dashboard stats
-router.get('/student-stats', auth, async (req, res) => {
-    try {
-        const student = await Student.findOne({ userId: req.user.id });
-        if (!student) return res.status(404).json({ msg: 'Student profile not found' });
 
-        // Attendance summary
-        const attendanceRecords = await Attendance.find({ student: student._id });
-        const totalDays = attendanceRecords.length;
-        const presentDays = attendanceRecords.filter(a => a.status === 'Present').length;
-
-        // Fee summary
-        const fees = await Fee.find({ student: student._id });
-        const totalFees = fees.reduce((sum, f) => sum + f.amount, 0);
-        const paidFees = fees.reduce((sum, f) => sum + f.paidAmount, 0);
-        const pendingFees = fees.filter(f => f.status === 'Pending' || f.status === 'Overdue');
-
-        // Recent results
-        const results = await Result.find({ student: student._id }).sort({ createdAt: -1 }).limit(5);
-
-        res.json({
-            student,
-            attendance: {
-                totalDays,
-                presentDays,
-                absentDays: totalDays - presentDays,
-                percentage: totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0
-            },
-            fees: {
-                totalAmount: totalFees,
-                paidAmount: paidFees,
-                pendingAmount: totalFees - paidFees,
-                pendingCount: pendingFees.length
-            },
-            recentResults: results
-        });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ msg: 'Server error' });
-    }
-});
 
 module.exports = router;

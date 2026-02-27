@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const Homework = require('../models/Homework');
 const Teacher = require('../models/Teacher');
-const Student = require('../models/Student');
+
 const auth = require('../middleware/auth');
 
 // @route   GET /api/homework
@@ -15,14 +15,7 @@ router.get('/', auth, async (req, res) => {
         let query = { isActive: true, schoolId: req.user.schoolId };
         const { class: cls, section } = req.query;
 
-        if (req.user.role === 'student') {
-            // Students see homework for their class
-            const student = await Student.findOne({ userId: req.user.id });
-            if (student) {
-                query.class = student.class;
-                query.section = student.section;
-            }
-        } else if (req.user.role === 'teacher') {
+        if (req.user.role === 'teacher') {
             // Teachers see only their homework
             const teacher = await Teacher.findOne({ userId: req.user.id });
             if (teacher) {
@@ -50,9 +43,6 @@ router.get('/', auth, async (req, res) => {
 // @desc    Create homework (teacher/admin)
 router.post('/', auth, async (req, res) => {
     try {
-        if (req.user.role === 'student') {
-            return res.status(403).json({ msg: 'Not authorized' });
-        }
 
         const { class: cls, section, subject, title, description, dueDate } = req.body;
 
@@ -105,9 +95,6 @@ router.post('/', auth, async (req, res) => {
 // @desc    Update homework
 router.put('/:id', auth, async (req, res) => {
     try {
-        if (req.user.role === 'student') {
-            return res.status(403).json({ msg: 'Not authorized' });
-        }
 
         const homework = await Homework.findOneAndUpdate(
             { _id: req.params.id, schoolId: req.user.schoolId },
@@ -127,9 +114,6 @@ router.put('/:id', auth, async (req, res) => {
 // @desc    Delete homework (soft)
 router.delete('/:id', auth, async (req, res) => {
     try {
-        if (req.user.role === 'student') {
-            return res.status(403).json({ msg: 'Not authorized' });
-        }
 
         const homework = await Homework.findOneAndUpdate(
             { _id: req.params.id, schoolId: req.user.schoolId },
@@ -143,43 +127,5 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
-// @route   POST /api/homework/:id/submit
-// @desc    Student submits homework
-router.post('/:id/submit', auth, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({ msg: 'Only students can submit homework' });
-        }
-
-        const homework = await Homework.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
-        if (!homework) return res.status(404).json({ msg: 'Homework not found' });
-
-        const student = await Student.findOne({ userId: req.user.id });
-        if (!student) return res.status(404).json({ msg: 'Student not found' });
-
-        // Check if already submitted
-        const existingSubmission = homework.submissions.find(
-            s => s.student.toString() === student._id.toString()
-        );
-        if (existingSubmission) {
-            return res.status(400).json({ msg: 'Already submitted' });
-        }
-
-        const isLate = new Date() > new Date(homework.dueDate);
-
-        homework.submissions.push({
-            student: student._id,
-            studentName: student.name,
-            answer: req.body.answer || '',
-            status: isLate ? 'Late' : 'Submitted'
-        });
-
-        await homework.save();
-        res.json({ msg: 'Homework submitted successfully!' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ msg: 'Server error' });
-    }
-});
 
 module.exports = router;
