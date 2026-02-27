@@ -745,10 +745,7 @@
                         <span class="nav-icon"><i class="fas fa-users"></i></span>
                         My Students
                     </div>
-                    <div class="nav-item" onclick="showTeacherSection('teacherHomework', this)">
-                        <span class="nav-icon"><i class="fas fa-book-open"></i></span>
-                        Homework
-                    </div>
+
                 </div>
             </nav>
             <div class="sidebar-footer">
@@ -933,35 +930,7 @@
                     </div>
                 </div>
 
-                <!-- Teacher Homework -->
-                <div class="section-page" id="teacherHomework">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-book-open" style="color:var(--accent-orange)"></i> Homework Management
-                            </h2>
-                            <button class="btn btn-primary" onclick="openModal('createHomeworkModal')"><i
-                                    class="fas fa-plus"></i> Create Homework</button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Subject</th>
-                                            <th>Title</th>
-                                            <th>Class</th>
-                                            <th>Assigned</th>
-                                            <th>Due Date</th>
-                                            <th>Submissions</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="teacherHomeworkTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </main>
     </div>

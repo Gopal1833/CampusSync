@@ -96,11 +96,10 @@ router.get('/summary/:studentId', auth, async (req, res) => {
         const total = records.length;
         const present = records.filter(r => r.status === 'Present').length;
         const absent = records.filter(r => r.status === 'Absent').length;
-        const late = records.filter(r => r.status === 'Late').length;
         const halfDay = records.filter(r => r.status === 'Half-Day').length;
         const percentage = total > 0 ? ((present / total) * 100).toFixed(2) : 0;
 
-        res.json({ total, present, absent, late, halfDay, percentage });
+        res.json({ total, present, absent, halfDay, percentage });
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ msg: 'Server error' });

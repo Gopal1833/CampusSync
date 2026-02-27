@@ -509,11 +509,10 @@ function showTeacherSection(sectionId, navItem) {
     document.getElementById(sectionId).classList.add('active');
     if (navItem) navItem.classList.add('active');
 
-    const titles = { teacherHome: 'Dashboard', teacherAttendance: 'Mark Attendance', teacherMarks: 'Upload Marks', teacherStudentList: 'My Students', teacherHomework: 'Homework' };
+    const titles = { teacherHome: 'Dashboard', teacherAttendance: 'Mark Attendance', teacherMarks: 'Upload Marks', teacherStudentList: 'My Students' };
     document.getElementById('teacherPageTitle').textContent = titles[sectionId] || 'Dashboard';
 
     if (sectionId === 'teacherStudentList') loadTeacherStudents();
-    if (sectionId === 'teacherHomework') loadTeacherHomework();
 
     document.getElementById('teacherSidebar').classList.remove('open');
 }
@@ -986,7 +985,6 @@ async function loadAttendanceStudents() {
                     <select id="att_${s._id}" class="form-control">
                         <option value="Present">Present</option>
                         <option value="Absent">Absent</option>
-                        <option value="Late">Late</option>
                         <option value="Half-Day">Half-Day</option>
                     </select>
                     <input type="text" class="form-control" id="attRem_${s._id}" placeholder="Remarks" style="font-size:12px;">
@@ -1195,7 +1193,6 @@ async function loadTeacherAttendanceStudents() {
                     <select id="tAtt_${s._id}">
                         <option value="Present">Present</option>
                         <option value="Absent">Absent</option>
-                        <option value="Late">Late</option>
                     </select>
                     <input type="text" class="form-control" id="tAttRem_${s._id}" placeholder="Remarks" style="font-size:12px;">
                 </div>
