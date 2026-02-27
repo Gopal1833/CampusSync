@@ -31,8 +31,8 @@
                 <style>
                     .role-cards {
                         display: grid;
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 10px;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 15px;
                         margin-bottom: 25px;
                     }
 
@@ -92,11 +92,6 @@
                         <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
                         <div class="role-title">Teacher</div>
                         <div class="role-desc">Manage classes & attendance</div>
-                    </div>
-                    <div class="role-card" id="cardStudent" onclick="switchLoginPortal('student')">
-                        <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
-                        <div class="role-title">Student</div>
-                        <div class="role-desc">View attendance & fees</div>
                     </div>
                 </div>
 
@@ -995,175 +990,7 @@
         </main>
     </div>
 
-    <!-- ========== STUDENT DASHBOARD ========== -->
-    <div class="app-layout" id="studentDashboard" style="display:none;">
-        <div class="sidebar-overlay" onclick="toggleStudentSidebar()"></div>
-        <aside class="sidebar" id="studentSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo"><i class="fas fa-school" style="font-size: 2rem; color: white;"></i></div>
-                <div class="sidebar-title">
-                    <h2 id="studentSidebarSchoolName">CampusSync</h2>
-                    <p>Student Panel</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">Menu</div>
-                    <div class="nav-item active" onclick="showStudentSection('studentHome', this)">
-                        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
-                        Dashboard
-                    </div>
-                    <div class="nav-item" onclick="showStudentSection('studentAttendance', this)">
-                        <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
-                        My Attendance
-                    </div>
-                    <div class="nav-item" onclick="showStudentSection('studentFees', this)">
-                        <span class="nav-icon"><i class="fas fa-rupee-sign"></i></span>
-                        My Fees
-                    </div>
-                    <div class="nav-item" onclick="showStudentSection('studentResults', this)">
-                        <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
-                        My Results
-                    </div>
-                    <div class="nav-item" onclick="showStudentSection('studentHomework', this)">
-                        <span class="nav-icon"><i class="fas fa-book-open"></i></span>
-                        Homework
-                    </div>
-                </div>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="user-info" onclick="logout()">
-                    <div class="user-avatar" id="studentAvatar">S</div>
-                    <div class="user-details">
-                        <h4 id="studentName">Student</h4>
-                        <p>Student</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-        <main class="main-content">
-            <header class="header">
-                <div class="header-left">
-                    <button class="menu-toggle" onclick="toggleStudentSidebar()"><i class="fas fa-bars"></i></button>
-                    <div>
-                        <h1 id="studentPageTitle">Dashboard</h1>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <button class="btn-logout" onclick="logout()"><i class="fas fa-power-off"></i>
-                        <span>Logout</span></button>
-                </div>
-            </header>
-            <div class="content-area">
-                <!-- Student Home -->
-                <div class="section-page active" id="studentHome">
-                    <div class="welcome-banner">
-                        <h2>Welcome, <span id="studentWelcomeName">Student</span>! 🎓</h2>
-                        <p>View your attendance, fees, results, and homework assignments.</p>
-                    </div>
-                    <div class="stats-grid" id="studentStats"></div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-chart-bar" style="color:var(--accent-violet)"></i> Recent Results</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Exam</th>
-                                            <th>Total</th>
-                                            <th>Obtained</th>
-                                            <th>Percentage</th>
-                                            <th>Result</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="studentRecentResults"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Student Attendance -->
-                <div class="section-page" id="studentAttendance">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-clipboard-check" style="color:var(--accent-emerald)"></i> My Attendance
-                            </h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="stats-grid mb-3" id="attendanceSummary"></div>
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Status</th>
-                                            <th>Remarks</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="studentAttendanceTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Student Fees -->
-                <div class="section-page" id="studentFees">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-rupee-sign" style="color:var(--accent-amber)"></i> My Fees</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Month</th>
-                                            <th>Type</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Paid Date</th>
-                                            <th>Receipt</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="studentFeesTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Student Results -->
-                <div class="section-page" id="studentResults">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-chart-bar" style="color:var(--primary-500)"></i> My Results</h2>
-                        </div>
-                        <div class="card-body" id="studentResultsDetail"></div>
-                    </div>
-                </div>
-
-                <!-- Student Homework -->
-                <div class="section-page" id="studentHomework">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2><i class="fas fa-book-open" style="color:var(--accent-orange)"></i> Homework &
-                                Assignments</h2>
-                        </div>
-                        <div class="card-body" id="homeworkList">
-                            <div class="empty-state">
-                                <div class="empty-icon">📚</div>
-                                <h3>Loading homework...</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
 
     <!-- ========== MODALS ========== -->
     <!-- Add Student Modal -->
@@ -1586,31 +1413,7 @@
         </div>
     </div>
 
-    <!-- ========== SUBMIT HOMEWORK MODAL ========== -->
-    <div class="modal-overlay" id="submitHomeworkModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2><i class="fas fa-paper-plane" style="color:var(--accent-emerald);margin-right:8px;"></i> Submit
-                    Homework</h2>
-                <button class="modal-close" onclick="closeModal('submitHomeworkModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="submitHomeworkForm" onsubmit="handleSubmitHomework(event)">
-                    <input type="hidden" id="submitHwId">
-                    <div class="form-group">
-                        <label>Homework: <strong id="submitHwTitle"></strong></label>
-                    </div>
-                    <div class="form-group"><label>Your Answer / Notes</label><textarea class="form-control"
-                            id="hwAnswer" rows="5" placeholder="Write your answer or notes here..."></textarea></div>
-                    <div class="modal-footer" style="padding:16px 0 0;border:none;">
-                        <button type="button" class="btn btn-outline"
-                            onclick="closeModal('submitHomeworkModal')">Cancel</button>
-                        <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane"></i> Submit</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>

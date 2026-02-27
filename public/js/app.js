@@ -152,7 +152,6 @@ function logout() {
     document.getElementById('loginPage').style.display = '';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('teacherDashboard').style.display = 'none';
-    document.getElementById('studentDashboard').style.display = 'none';
     document.getElementById('loginError').style.display = 'none';
     document.getElementById('loginForm').reset();
 
@@ -184,13 +183,6 @@ function resetAllSections() {
     const teacherNavFirst = document.querySelector('#teacherDashboard .nav-item');
     if (teacherNavFirst) teacherNavFirst.classList.add('active');
 
-    // Reset student sections
-    document.querySelectorAll('#studentDashboard .section-page').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('#studentDashboard .nav-item').forEach(n => n.classList.remove('active'));
-    const studentHome = document.getElementById('studentHome');
-    if (studentHome) studentHome.classList.add('active');
-    const studentNavFirst = document.querySelector('#studentDashboard .nav-item');
-    if (studentNavFirst) studentNavFirst.classList.add('active');
 
     // Reset page titles
     const pageTitle = document.getElementById('pageTitle');
@@ -199,20 +191,16 @@ function resetAllSections() {
     if (pageSubtitle) pageSubtitle.textContent = "Welcome back! Here's your overview.";
     const teacherPageTitle = document.getElementById('teacherPageTitle');
     if (teacherPageTitle) teacherPageTitle.textContent = 'Dashboard';
-    const studentPageTitle = document.getElementById('studentPageTitle');
-    if (studentPageTitle) studentPageTitle.textContent = 'Dashboard';
+    if (teacherPageTitle) teacherPageTitle.textContent = 'Dashboard';
 }
-
 function showDashboard(role) {
     document.getElementById('loginPage').style.display = 'none';
-    // Always reset all sections to Home first
     resetAllSections();
 
     // Set school name in UI if available
     const schoolNameStr = currentUser?.schoolName || 'CampusSync';
     if (document.getElementById('sidebarSchoolName')) document.getElementById('sidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('teacherSidebarSchoolName')) document.getElementById('teacherSidebarSchoolName').textContent = schoolNameStr;
-    if (document.getElementById('studentSidebarSchoolName')) document.getElementById('studentSidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('welcomeSchoolName')) document.getElementById('welcomeSchoolName').textContent = schoolNameStr;
 
     if (role === 'admin') {
@@ -228,13 +216,6 @@ function showDashboard(role) {
         const welcomeEl = document.getElementById('teacherWelcomeName');
         if (welcomeEl) welcomeEl.textContent = currentUser.name;
         if (typeof loadTeacherDashboard === "function") loadTeacherDashboard();
-    } else if (role === 'student') {
-        document.getElementById('studentDashboard').style.display = 'flex';
-        document.getElementById('studentName').textContent = currentUser.name;
-        document.getElementById('studentAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-        const welcomeEl = document.getElementById('studentWelcomeName');
-        if (welcomeEl) welcomeEl.textContent = currentUser.name;
-        if (typeof loadStudentDashboard === "function") loadStudentDashboard();
     }
 }
 
@@ -242,7 +223,6 @@ function showDashboard(role) {
 function switchLoginPortal(portalType) {
     const cardAdmin = document.getElementById('cardAdmin');
     const cardTeacher = document.getElementById('cardTeacher');
-    const cardStudent = document.getElementById('cardStudent');
     const hiddenRole = document.getElementById('hiddenLoginRole');
 
     // Login Form Fields
@@ -260,7 +240,6 @@ function switchLoginPortal(portalType) {
     // Reset active class
     if (cardAdmin) cardAdmin.classList.remove('active');
     if (cardTeacher) cardTeacher.classList.remove('active');
-    if (cardStudent) cardStudent.classList.remove('active');
 
     hiddenRole.value = portalType;
 
@@ -290,16 +269,15 @@ function switchLoginPortal(portalType) {
         document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
     } else {
         if (portalType === 'teacher' && cardTeacher) cardTeacher.classList.add('active');
-        if (portalType === 'student' && cardStudent) cardStudent.classList.add('active');
 
-        // Show Staff/Student Login Fields
+        // Show Staff Login Fields
         loginSchoolWrapper.style.display = 'none';
         loginEmailWrapper.style.display = 'none';
         loginIdWrapper.style.display = 'block';
         document.getElementById('loginSchoolName').removeAttribute('required');
         document.getElementById('loginEmail').removeAttribute('required');
         document.getElementById('loginId').setAttribute('required', 'true');
-        document.getElementById('loginId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
+        document.getElementById('loginId').placeholder = 'Employee Number';
 
         // Show Staff/Student Forgot Fields
         forgotSchoolWrapper.style.display = 'none';
@@ -310,7 +288,7 @@ function switchLoginPortal(portalType) {
         document.getElementById('forgotSchoolName').removeAttribute('required');
         document.getElementById('forgotEmail').removeAttribute('required');
         document.getElementById('forgotId').setAttribute('required', 'true');
-        document.getElementById('forgotId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
+        document.getElementById('forgotId').placeholder = 'Employee Number';
         document.getElementById('forgotDob').setAttribute('required', 'true');
         document.getElementById('forgotNewPass').setAttribute('required', 'true');
 
@@ -501,7 +479,6 @@ function showSection(sectionId, navItem) {
     const overlay = document.querySelector('#adminDashboard .sidebar-overlay');
     if (overlay) overlay.classList.remove('active');
 }
-
 function showTeacherSection(sectionId, navItem) {
     document.querySelectorAll('#teacherDashboard .section-page').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('#teacherDashboard .nav-item').forEach(n => n.classList.remove('active'));
@@ -514,26 +491,7 @@ function showTeacherSection(sectionId, navItem) {
     if (sectionId === 'teacherStudentList') loadTeacherStudents();
 
     document.getElementById('teacherSidebar').classList.remove('open');
-}
-
-function showStudentSection(sectionId, navItem) {
-    document.querySelectorAll('#studentDashboard .section-page').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('#studentDashboard .nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
-
-    const titles = { studentHome: 'Dashboard', studentAttendance: 'My Attendance', studentFees: 'My Fees', studentResults: 'My Results', studentHomework: 'Homework' };
-    document.getElementById('studentPageTitle').textContent = titles[sectionId] || 'Dashboard';
-
-    if (sectionId === 'studentAttendance') loadStudentAttendance();
-    if (sectionId === 'studentFees') loadStudentFees();
-    if (sectionId === 'studentResults') loadStudentResults();
-    if (sectionId === 'studentHomework') loadStudentHomework();
-
-    document.getElementById('studentSidebar').classList.remove('open');
-}
-
-// ========== ADMIN DASHBOARD ==========
+}// ========== ADMIN DASHBOARD ==========
 async function loadAdminDashboard() {
     try {
         // Update welcome banner
@@ -1268,147 +1226,6 @@ async function loadTeacherStudents() {
     `).join('');
 }
 
-// ========== STUDENT DASHBOARD ==========
-async function loadStudentDashboard() {
-    try {
-        document.getElementById('studentWelcomeName').textContent = currentUser?.name || 'Student';
-        const data = await api('/api/dashboard/student-stats');
-        if (!data) return;
-
-        document.getElementById('studentStats').innerHTML = `
-            <div class="stat-card blue">
-                <div class="stat-header"><div class="stat-icon"><i class="fas fa-user"></i></div></div>
-                <div class="stat-value">${data.student?.class || '-'}</div>
-                <div class="stat-label">Class / Section ${data.student?.section || ''}</div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-header"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div></div>
-                <div class="stat-value">${data.attendance?.percentage || 0}%</div>
-                <div class="stat-label">Attendance (${data.attendance?.presentDays}/${data.attendance?.totalDays} days)</div>
-            </div>
-            <div class="stat-card amber">
-                <div class="stat-header"><div class="stat-icon"><i class="fas fa-rupee-sign"></i></div></div>
-                <div class="stat-value">₹${formatNum(data.fees?.pendingAmount || 0)}</div>
-                <div class="stat-label">Fees Pending</div>
-            </div>
-            <div class="stat-card rose">
-                <div class="stat-header"><div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div></div>
-                <div class="stat-value">${data.fees?.pendingCount || 0}</div>
-                <div class="stat-label">Pending Invoices</div>
-            </div>
-        `;
-
-        // Recent results
-        if (data.recentResults && data.recentResults.length > 0) {
-            document.getElementById('studentRecentResults').innerHTML = data.recentResults.map(r => `
-                <tr>
-                    <td>${r.examType}</td>
-                    <td>${r.totalMarks}</td>
-                    <td>${r.totalObtained}</td>
-                    <td><strong>${r.percentage}%</strong></td>
-                    <td><span class="badge ${r.result.toLowerCase()}">${r.result}</span></td>
-                </tr>
-            `).join('');
-        } else {
-            document.getElementById('studentRecentResults').innerHTML = '<tr><td colspan="5" class="text-center" style="padding:24px;color:var(--gray-400)">No results available</td></tr>';
-        }
-    } catch (err) {
-        console.error('Student dashboard error:', err);
-    }
-}
-
-async function loadStudentAttendance() {
-    const records = await api('/api/attendance');
-    if (!records) return;
-
-    // Summary
-    const total = records.length;
-    const present = records.filter(r => r.status === 'Present').length;
-    const absent = records.filter(r => r.status === 'Absent').length;
-    const pct = total > 0 ? ((present / total) * 100).toFixed(1) : 0;
-
-    document.getElementById('attendanceSummary').innerHTML = `
-        <div class="stat-card green">
-            <div class="stat-header"><div class="stat-icon"><i class="fas fa-check-circle"></i></div></div>
-            <div class="stat-value">${present}</div>
-            <div class="stat-label">Present Days</div>
-        </div>
-        <div class="stat-card rose">
-            <div class="stat-header"><div class="stat-icon"><i class="fas fa-times-circle"></i></div></div>
-            <div class="stat-value">${absent}</div>
-            <div class="stat-label">Absent Days</div>
-        </div>
-        <div class="stat-card blue">
-            <div class="stat-header"><div class="stat-icon"><i class="fas fa-percentage"></i></div></div>
-            <div class="stat-value">${pct}%</div>
-            <div class="stat-label">Overall Attendance</div>
-        </div>
-    `;
-
-    document.getElementById('studentAttendanceTable').innerHTML = records.map(r => `
-        <tr>
-            <td>${new Date(r.date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
-            <td><span class="badge ${r.status.toLowerCase()}">${r.status}</span></td>
-            <td>${r.remarks || '-'}</td>
-        </tr>
-    `).join('');
-}
-
-async function loadStudentFees() {
-    const fees = await api('/api/fees');
-    if (!fees) return;
-
-    document.getElementById('studentFeesTable').innerHTML = fees.map(f => `
-        <tr>
-            <td>${f.month} ${f.year}</td>
-            <td>${f.feeType}</td>
-            <td>₹${f.amount}</td>
-            <td><span class="badge ${f.status.toLowerCase()}">${f.status}</span></td>
-            <td>${f.paidDate ? new Date(f.paidDate).toLocaleDateString('en-IN') : '-'}</td>
-            <td>
-                ${f.status === 'Paid' ? `<button class="btn btn-sm btn-outline" onclick="downloadReceipt('${f._id}')"><i class="fas fa-download"></i> PDF</button>` : '-'}
-            </td>
-        </tr>
-    `).join('');
-}
-
-async function loadStudentResults() {
-    const results = await api('/api/results');
-    if (!results || !results.length) {
-        document.getElementById('studentResultsDetail').innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><h3>No results available yet</h3></div>';
-        return;
-    }
-
-    document.getElementById('studentResultsDetail').innerHTML = results.map(r => `
-        <div class="card mb-2" style="border:1px solid var(--gray-200);">
-            <div class="card-header">
-                <h2 style="font-size:15px;">${r.examType} — ${r.academicYear}</h2>
-                <span class="badge ${r.result.toLowerCase()}">${r.result} (${r.percentage}%)</span>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table>
-                        <thead><tr><th>Subject</th><th>Max Marks</th><th>Obtained</th><th>Grade</th></tr></thead>
-                        <tbody>
-                            ${r.subjects.map(s => `
-                                <tr>
-                                    <td>${s.subjectName}</td>
-                                    <td>${s.maxMarks}</td>
-                                    <td><strong>${s.obtainedMarks}</strong></td>
-                                    <td><span class="badge ${s.grade === 'F' ? 'fail' : 'pass'}">${s.grade}</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-2" style="text-align:right; color:var(--gray-600); font-size:14px;">
-                    <strong>Total: ${r.totalObtained}/${r.totalMarks} | Percentage: ${r.percentage}%</strong>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
 // ========== UTILITIES ==========
 function formatNum(num) {
     if (num >= 10000000) return (num / 10000000).toFixed(1) + 'Cr';
@@ -1573,95 +1390,7 @@ async function deleteHomework(id) {
     loadTeacherHomework();
 }
 
-// ========== STUDENT HOMEWORK ==========
-// Store homework data globally for submit reference
-let _homeworkCache = [];
 
-async function loadStudentHomework() {
-    const container = document.getElementById('homeworkList');
-    try {
-        const homework = await api('/api/homework');
-
-        if (!homework || !Array.isArray(homework) || homework.length === 0) {
-            container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><h3>No homework assigned</h3><p style="color:var(--gray-400)">Your teachers haven\'t assigned any homework yet.</p></div>';
-            return;
-        }
-
-        _homeworkCache = homework;
-
-        // Get student profile to check submissions
-        let studentId = null;
-        if (currentUser && currentUser.profileId) {
-            studentId = currentUser.profileId;
-        }
-
-        container.innerHTML = homework.map((hw, index) => {
-            const dueDate = new Date(hw.dueDate);
-            const isOverdue = dueDate < new Date();
-            let submission = null;
-
-            if (studentId && hw.submissions && hw.submissions.length > 0) {
-                submission = hw.submissions.find(s => {
-                    const sId = s.student?._id || s.student;
-                    return sId === studentId || String(sId) === String(studentId);
-                });
-            }
-
-            let statusBadge, statusClass;
-            if (submission) {
-                statusBadge = submission.status === 'Late' ? 'Late Submitted' : 'Submitted';
-                statusClass = submission.status === 'Late' ? 'overdue' : 'paid';
-            } else if (isOverdue) {
-                statusBadge = 'Overdue';
-                statusClass = 'overdue';
-            } else {
-                statusBadge = 'Pending';
-                statusClass = 'pending';
-            }
-
-            return `
-                <div class="homework-card">
-                    <div class="hw-subject">${hw.subject || 'Subject'}</div>
-                    <div class="hw-title" style="font-weight:600;margin:4px 0;color:var(--gray-800);">${hw.title || ''}</div>
-                    <div class="hw-description">${hw.description || ''}</div>
-                    <div class="hw-meta">
-                        <span><i class="fas fa-calendar-alt"></i> Due: ${dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        <span><i class="fas fa-user"></i> ${hw.teacherName || 'Teacher'}</span>
-                        <span class="badge ${statusClass}" style="font-size:11px;">${statusBadge}</span>
-                    </div>
-                    ${!submission ? `<div style="margin-top:12px;"><button class="btn btn-sm btn-primary" onclick="openSubmitHomework(${index})"><i class="fas fa-paper-plane"></i> Submit</button></div>` : ''}
-                </div>
-            `;
-        }).join('');
-    } catch (err) {
-        console.error('Student homework error:', err);
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><h3>No homework available</h3><p style="color:var(--gray-400)">Check back later for assignments.</p></div>';
-    }
-}
-
-function openSubmitHomework(index) {
-    const hw = _homeworkCache[index];
-    if (!hw) return;
-    document.getElementById('submitHwId').value = hw._id;
-    document.getElementById('submitHwTitle').textContent = hw.title;
-    document.getElementById('hwAnswer').value = '';
-    openModal('submitHomeworkModal');
-}
-
-async function handleSubmitHomework(e) {
-    e.preventDefault();
-    const hwId = document.getElementById('submitHwId').value;
-    const answer = document.getElementById('hwAnswer').value;
-
-    const result = await api(`/api/homework/${hwId}/submit`, 'POST', { answer });
-    if (result && result.msg && !result.msg.includes('error') && !result.msg.includes('Error')) {
-        showToast(result.msg || 'Homework submitted!');
-        closeModal('submitHomeworkModal');
-        loadStudentHomework();
-    } else {
-        showToast(result?.msg || 'Error submitting homework', 'error');
-    }
-}
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', () => {
