@@ -28,13 +28,76 @@
                         schools, enriching minds."</p>
                 </div>
 
-                <div class="login-tabs" style="display: flex; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
-                    <div id="tabAdmin" onclick="switchLoginPortal('admin')"
-                        style="flex: 1; text-align: center; padding: 10px; cursor: pointer; border-bottom: 3px solid var(--primary-600); font-weight: bold; color: var(--primary-600); transition: all 0.3s;">
-                        School Admin</div>
-                    <div id="tabStaff" onclick="switchLoginPortal('staff')"
-                        style="flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: all 0.3s;">
-                        Staff</div>
+                <style>
+                    .role-cards {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 10px;
+                        margin-bottom: 25px;
+                    }
+
+                    .role-card {
+                        padding: 15px 10px;
+                        border: 2px solid #e2e8f0;
+                        border-radius: 10px;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        background: #f8fafc;
+                    }
+
+                    .role-card:hover {
+                        border-color: var(--primary-400);
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .role-card.active {
+                        border-color: var(--primary-600);
+                        background: #eff6ff;
+                    }
+
+                    .role-icon {
+                        font-size: 1.5rem;
+                        color: var(--primary-600);
+                        margin-bottom: 8px;
+                    }
+
+                    .role-title {
+                        font-weight: 700;
+                        color: #1e293b;
+                        font-size: 0.95rem;
+                        margin-bottom: 4px;
+                    }
+
+                    .role-desc {
+                        font-size: 0.75rem;
+                        color: #64748b;
+                        line-height: 1.2;
+                    }
+
+                    @media (max-width: 500px) {
+                        .role-cards {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+                </style>
+                <div class="role-cards">
+                    <div class="role-card active" id="cardAdmin" onclick="switchLoginPortal('admin')">
+                        <div class="role-icon"><i class="fas fa-user-shield"></i></div>
+                        <div class="role-title">School Admin</div>
+                        <div class="role-desc">Manage school, staff & students</div>
+                    </div>
+                    <div class="role-card" id="cardTeacher" onclick="switchLoginPortal('teacher')">
+                        <div class="role-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                        <div class="role-title">Teacher</div>
+                        <div class="role-desc">Manage classes & attendance</div>
+                    </div>
+                    <div class="role-card" id="cardStudent" onclick="switchLoginPortal('student')">
+                        <div class="role-icon"><i class="fas fa-user-graduate"></i></div>
+                        <div class="role-title">Student</div>
+                        <div class="role-desc">View attendance & fees</div>
+                    </div>
                 </div>
 
                 <div class="login-error" id="loginError"></div>
@@ -43,10 +106,7 @@
                     <!-- Hidden role input for admin by default -->
                     <input type="hidden" id="hiddenLoginRole" value="admin">
 
-                    <!-- Role is auto-set to 'teacher' for Staff tab -->
-                    <select id="loginRole" style="display:none;">
-                        <option value="teacher">Staff / Teacher</option>
-                    </select>
+
 
                     <div class="form-group" id="loginSchoolWrapper">
                         <label for="loginSchoolName">School Name</label>
@@ -775,7 +835,7 @@
                 <!-- Teacher Home -->
                 <div class="section-page active" id="teacherHome">
                     <div class="welcome-banner">
-                        <h2>Welcome, <span id="teacherWelcomeName">Staff</span>! �</h2>
+                        <h2>Welcome, <span id="teacherWelcomeName">Staff</span>! 👋</h2>
                         <p>Manage your classes, mark attendance, and upload marks.</p>
                     </div>
                     <div class="stats-grid">

@@ -85,13 +85,7 @@ async function handleLogin(e) {
     btn.classList.add('loading');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
     // Determine active role from tabs
-    let role;
-    const hiddenRole = document.getElementById('hiddenLoginRole').value;
-    if (hiddenRole === 'admin') {
-        role = 'admin';
-    } else {
-        role = document.getElementById('loginRole').value;
-    }
+    const role = document.getElementById('hiddenLoginRole').value;
 
     if (!role) {
         showLoginError('Please select a role');
@@ -233,14 +227,22 @@ function showDashboard(role) {
         // Set welcome name in Staff panel
         const welcomeEl = document.getElementById('teacherWelcomeName');
         if (welcomeEl) welcomeEl.textContent = currentUser.name;
-        loadTeacherDashboard();
+        if (typeof loadTeacherDashboard === "function") loadTeacherDashboard();
+    } else if (role === 'student') {
+        document.getElementById('studentDashboard').style.display = 'flex';
+        document.getElementById('studentName').textContent = currentUser.name;
+        document.getElementById('studentAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        const welcomeEl = document.getElementById('studentWelcomeName');
+        if (welcomeEl) welcomeEl.textContent = currentUser.name;
+        if (typeof loadStudentDashboard === "function") loadStudentDashboard();
     }
 }
 
 // ========== REGISTER SCHOOL & FORGOT PASSWORD TOGGLES ==========
 function switchLoginPortal(portalType) {
-    const tabAdmin = document.getElementById('tabAdmin');
-    const tabStaff = document.getElementById('tabStaff');
+    const cardAdmin = document.getElementById('cardAdmin');
+    const cardTeacher = document.getElementById('cardTeacher');
+    const cardStudent = document.getElementById('cardStudent');
     const hiddenRole = document.getElementById('hiddenLoginRole');
 
     // Login Form Fields
@@ -255,13 +257,15 @@ function switchLoginPortal(portalType) {
     const forgotDobWrapper = document.getElementById('forgotDobWrapper');
     const forgotNewPassWrapper = document.getElementById('forgotNewPassWrapper');
 
-    if (portalType === 'admin') {
-        tabAdmin.style.borderBottomColor = 'var(--primary-600)';
-        tabAdmin.style.color = 'var(--primary-600)';
-        tabStaff.style.borderBottomColor = 'transparent';
-        tabStaff.style.color = '#888';
+    // Reset active class
+    if (cardAdmin) cardAdmin.classList.remove('active');
+    if (cardTeacher) cardTeacher.classList.remove('active');
+    if (cardStudent) cardStudent.classList.remove('active');
 
-        hiddenRole.value = 'admin';
+    hiddenRole.value = portalType;
+
+    if (portalType === 'admin') {
+        if (cardAdmin) cardAdmin.classList.add('active');
 
         // Show Admin Login Fields
         loginSchoolWrapper.style.display = 'block';
@@ -285,25 +289,19 @@ function switchLoginPortal(portalType) {
 
         document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
     } else {
-        // Staff tab — auto role = teacher, no dropdown needed
-        tabStaff.style.borderBottomColor = 'var(--primary-600)';
-        tabStaff.style.color = 'var(--primary-600)';
-        tabAdmin.style.borderBottomColor = 'transparent';
-        tabAdmin.style.color = '#888';
+        if (portalType === 'teacher' && cardTeacher) cardTeacher.classList.add('active');
+        if (portalType === 'student' && cardStudent) cardStudent.classList.add('active');
 
-        hiddenRole.value = 'staff';
-        // Auto-select teacher role
-        document.getElementById('loginRole').value = 'teacher';
-
-        // Show Staff Login Fields
+        // Show Staff/Student Login Fields
         loginSchoolWrapper.style.display = 'none';
         loginEmailWrapper.style.display = 'none';
         loginIdWrapper.style.display = 'block';
         document.getElementById('loginSchoolName').removeAttribute('required');
         document.getElementById('loginEmail').removeAttribute('required');
         document.getElementById('loginId').setAttribute('required', 'true');
+        document.getElementById('loginId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
 
-        // Show Staff Forgot Fields
+        // Show Staff/Student Forgot Fields
         forgotSchoolWrapper.style.display = 'none';
         forgotEmailWrapper.style.display = 'none';
         forgotIdWrapper.style.display = 'block';
@@ -312,6 +310,7 @@ function switchLoginPortal(portalType) {
         document.getElementById('forgotSchoolName').removeAttribute('required');
         document.getElementById('forgotEmail').removeAttribute('required');
         document.getElementById('forgotId').setAttribute('required', 'true');
+        document.getElementById('forgotId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
         document.getElementById('forgotDob').setAttribute('required', 'true');
         document.getElementById('forgotNewPass').setAttribute('required', 'true');
 
@@ -364,9 +363,9 @@ async function handleRegisterSchool(e) {
     try {
         const response = await api('/api/school/register-school', 'POST', data);
         if (response && response.schoolCode) {
-            document.getElementById('registerSuccess').style.display = 'block';
-            document.getElementById('registerSuccess').innerHTML = `Success! Your School Code is: <strong>${response.schoolCode}</strong><br>Please save this code to login.`;
             document.getElementById('registerSchoolForm').reset();
+            alert('School registered! You can now log in.');
+            showLoginForm();
         } else {
             const errorMsg = response?.errors ? response.errors[0].msg : (response?.msg || 'Registration failed');
             showLoginError(errorMsg);
@@ -1427,13 +1426,6 @@ function showForgotPassword(e) {
     document.getElementById('loginError').style.display = 'none';
 }
 
-function showLoginForm(e) {
-    if (e) e.preventDefault();
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('forgotPasswordForm').style.display = 'none';
-    document.getElementById('resetPasswordForm').style.display = 'none';
-    document.getElementById('loginError').style.display = 'none';
-}
 
 function showResetForm() {
     document.getElementById('loginForm').style.display = 'none';
