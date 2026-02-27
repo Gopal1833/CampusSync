@@ -336,15 +336,7 @@ router.post('/reset-dob', async (req, res) => {
         }
 
         let profileMatch = false;
-        if (user.role === 'student') {
-            const Student = require('../models/Student');
-            const student = await Student.findOne({ _id: user.profileId });
-            if (student && student.dateOfBirth) {
-                const storedDob = new Date(student.dateOfBirth).toISOString().split('T')[0];
-                const inputDob = new Date(dob).toISOString().split('T')[0];
-                if (storedDob === inputDob) profileMatch = true;
-            }
-        } else if (user.role === 'teacher') {
+        if (user.role === 'teacher') {
             const Teacher = require('../models/Teacher');
             const teacher = await Teacher.findOne({ _id: user.profileId });
             if (teacher && teacher.dateOfBirth) {

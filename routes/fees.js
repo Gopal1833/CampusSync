@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const Fee = require('../models/Fee');
-const Student = require('../models/Student');
+
 const auth = require('../middleware/auth');
 
 // @route   GET /api/fees
@@ -21,11 +21,7 @@ router.get('/', auth, async (req, res) => {
 
 
 
-        // Filter by class if provided
-        if (cls) {
-            const studentIds = await Student.find({ class: cls, schoolId: req.user.schoolId }).distinct('_id');
-            query.student = { $in: studentIds };
-        }
+
 
         const fees = await Fee.find(query)
             .populate('student', 'name rollNumber class section admissionNumber')

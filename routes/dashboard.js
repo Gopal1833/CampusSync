@@ -3,7 +3,7 @@
 // ========================================
 const express = require('express');
 const router = express.Router();
-const Student = require('../models/Student');
+
 const Teacher = require('../models/Teacher');
 const Fee = require('../models/Fee');
 const Attendance = require('../models/Attendance');
@@ -17,7 +17,7 @@ router.get('/stats', auth, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
         const schoolObjectId = new mongoose.Types.ObjectId(schoolId);
-        const totalStudents = await Student.countDocuments({ isActive: true, schoolId });
+        const totalStudents = 0;
         const totalTeachers = await Teacher.countDocuments({ isActive: true, schoolId });
 
         // Notice and Homework Counts
@@ -56,11 +56,7 @@ router.get('/stats', auth, async (req, res) => {
         });
 
         // Class-wise student count
-        const classWise = await Student.aggregate([
-            { $match: { isActive: true, schoolId: schoolObjectId } },
-            { $group: { _id: '$class', count: { $sum: 1 } } },
-            { $sort: { _id: 1 } }
-        ]);
+        const classWise = [];
 
         // Monthly fee collection
         const monthlyFees = await Fee.aggregate([
