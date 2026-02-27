@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const Attendance = require('../models/Attendance');
-
+const Student = require('../models/Student');
 const auth = require('../middleware/auth');
 
 // @route   GET /api/attendance
@@ -25,7 +25,11 @@ router.get('/', auth, async (req, res) => {
         }
         if (studentId) query.student = studentId;
 
-
+        // Students can only view their own attendance
+        if (req.user.role === 'student') {
+            const student = await Student.findOne({ userId: req.user.id });
+            if (student) query.student = student._id;
+        }
 
         const attendance = await Attendance.find(query)
             .populate('student', 'name rollNumber admissionNumber')
@@ -43,7 +47,9 @@ router.get('/', auth, async (req, res) => {
 // @desc    Mark attendance for multiple students (teacher/admin)
 router.post('/bulk', auth, async (req, res) => {
     try {
-
+        if (req.user.role === 'student') {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
 
         const { date, class: cls, section, records } = req.body;
         // records: [{ studentId, status, remarks }]

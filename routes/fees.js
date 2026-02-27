@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const Fee = require('../models/Fee');
-
+const Student = require('../models/Student');
 const auth = require('../middleware/auth');
 
 // @route   GET /api/fees
@@ -19,9 +19,17 @@ router.get('/', auth, async (req, res) => {
         if (month) query.month = month;
         if (year) query.year = parseInt(year);
 
+        // Students can only view their own fees
+        if (req.user.role === 'student') {
+            const student = await Student.findOne({ userId: req.user.id });
+            if (student) query.student = student._id;
+        }
 
-
-
+        // Filter by class if provided
+        if (cls) {
+            const studentIds = await Student.find({ class: cls, schoolId: req.user.schoolId }).distinct('_id');
+            query.student = { $in: studentIds };
+        }
 
         const fees = await Fee.find(query)
             .populate('student', 'name rollNumber class section admissionNumber')
@@ -39,7 +47,9 @@ router.get('/', auth, async (req, res) => {
 // @desc    Create fee record (admin only)
 router.post('/', auth, async (req, res) => {
     try {
-
+        if (req.user.role === 'student') {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
 
         const feeData = req.body;
         feeData.collectedBy = req.user.id;
@@ -64,7 +74,9 @@ router.post('/', auth, async (req, res) => {
 // @desc    Update fee (mark as paid, etc.)
 router.put('/:id', auth, async (req, res) => {
     try {
-
+        if (req.user.role === 'student') {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
 
         const updateData = req.body;
         if (updateData.status === 'Paid') {
