@@ -90,10 +90,10 @@ function showAccountantSection(sectionId, element) {
     document.getElementById(sectionId).classList.add('active');
     document.querySelectorAll('#accountantSidebar .nav-item').forEach(el => el.classList.remove('active'));
     if (element) element.classList.add('active');
-    
+
     if (sectionId === 'accHome') loadAccountantDashboard();
     if (sectionId === 'accFees') loadAccFees();
-    
+
     toggleAccountantSidebar(); // Mobile close
 }
 
@@ -138,10 +138,17 @@ async function handleLogin(e) {
             return;
         }
 
-        // Check role match
-        if (response.user.role !== role && !(role === 'staff' && (response.user.role === 'teacher' || response.user.role === 'accountant'))) {
-                throw new Error('You are logging into the wrong portal. Please select correct role.');
-            }`);
+        // Validate that the selected portal matches the user role
+        if (role === 'staff') {
+            // Staff portal is shared by teachers & accountants
+            const isStaffRole = response.user.role === 'teacher' || response.user.role === 'accountant';
+            if (!isStaffRole) {
+                showLoginError('You are logging into the wrong portal. Please select the correct role.');
+                resetLoginBtn();
+                return;
+            }
+        } else if (response.user.role !== role) {
+            showLoginError('You are logging into the wrong portal. Please select the correct role.');
             resetLoginBtn();
             return;
         }
@@ -180,17 +187,32 @@ function logout() {
     localStorage.removeItem('schoolName');
     localStorage.removeItem('schoolId');
     document.getElementById('loginPage').style.display = '';
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('teacherDashboard').style.display = 'none';
-    document.getElementById('studentDashboard').style.display = 'none';
-    document.getElementById('loginError').style.display = 'none';
-    document.getElementById('loginForm').reset();
+    const adminDash = document.getElementById('adminDashboard');
+    const teacherDash = document.getElementById('teacherDashboard');
+    const studentDash = document.getElementById('studentDashboard');
+    const accountantDash = document.getElementById('accountantDashboard');
+    if (adminDash) adminDash.style.display = 'none';
+    if (teacherDash) teacherDash.style.display = 'none';
+    if (studentDash) studentDash.style.display = 'none';
+    if (accountantDash) accountantDash.style.display = 'none';
 
-    // Hide register and forgot password forms
-    document.getElementById('registerSchoolForm').style.display = 'none';
-    document.getElementById('forgotPasswordForm').style.display = 'none';
-    document.getElementById('resetPasswordForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
+    const loginError = document.getElementById('loginError');
+    if (loginError) loginError.style.display = 'none';
+
+    // Reset to main login section
+    const loginFormSection = document.getElementById('loginSection');
+    const forgotSection = document.getElementById('forgotPasswordSection');
+    const resetSection = document.getElementById('resetPasswordSection');
+    const registerSection = document.getElementById('registerSchoolSection');
+
+    if (loginFormSection) {
+        loginFormSection.style.display = 'block';
+        const formEl = loginFormSection.tagName === 'FORM' ? loginFormSection : loginFormSection.querySelector('form');
+        if (formEl && typeof formEl.reset === 'function') formEl.reset();
+    }
+    if (forgotSection) forgotSection.style.display = 'none';
+    if (resetSection) resetSection.style.display = 'none';
+    if (registerSection) registerSection.style.display = 'none';
 
     resetLoginBtn();
     // Reset all sections back to home
@@ -259,7 +281,7 @@ function showDashboard(role) {
     } else if (role === 'accountant') {
         document.getElementById('accountantDashboard').style.display = 'flex';
         if (document.getElementById('accountantName')) document.getElementById('accountantName').textContent = currentUser.name;
-        
+
         const welcomeEl = document.getElementById('accWelcomeName');
         if (welcomeEl) welcomeEl.textContent = currentUser.name;
         if (typeof loadAccountantDashboard === "function") loadAccountantDashboard();
@@ -268,79 +290,99 @@ function showDashboard(role) {
 
 // ========== REGISTER SCHOOL & FORGOT PASSWORD TOGGLES ==========
 function switchLoginPortal(portalType) {
-    const cardAdmin = document.getElementById('cardAdmin');
-    const cardStaff = document.getElementById('cardStaff');
-    const hiddenRole = document.getElementById('hiddenLoginRole');
+    try {
+        const cardAdmin = document.getElementById('cardAdmin');
+        const cardStaff = document.getElementById('cardStaff');
+        const hiddenRole = document.getElementById('hiddenLoginRole');
 
-    // Login Form Fields
-    const loginSchoolWrapper = document.getElementById('loginSchoolWrapper');
-    const loginEmailWrapper = document.getElementById('loginEmailWrapper');
-    const loginIdWrapper = document.getElementById('loginIdWrapper');
+        // Login Form Fields
+        const loginSchoolWrapper = document.getElementById('loginSchoolWrapper');
+        const loginEmailWrapper = document.getElementById('loginEmailWrapper');
+        const loginIdWrapper = document.getElementById('loginIdWrapper');
 
-    // Forgot Password Form Fields
-    const forgotSchoolWrapper = document.getElementById('forgotSchoolWrapper');
-    const forgotEmailWrapper = document.getElementById('forgotEmailWrapper');
-    const forgotIdWrapper = document.getElementById('forgotIdWrapper');
-    const forgotDobWrapper = document.getElementById('forgotDobWrapper');
-    const forgotNewPassWrapper = document.getElementById('forgotNewPassWrapper');
+        // Forgot Password Form Fields
+        const forgotSchoolWrapper = document.getElementById('forgotSchoolWrapper');
+        const forgotEmailWrapper = document.getElementById('forgotEmailWrapper');
+        const forgotIdWrapper = document.getElementById('forgotIdWrapper');
+        const forgotDobWrapper = document.getElementById('forgotDobWrapper');
+        const forgotNewPassWrapper = document.getElementById('forgotNewPassWrapper');
 
-    // Reset active class
-    if (cardAdmin) cardAdmin.classList.remove('active');
-    if (cardStaff) cardStaff.classList.remove('active');
+        // Reset active class
+        if (cardAdmin) cardAdmin.classList.remove('active');
+        if (cardStaff) cardStaff.classList.remove('active');
 
-    hiddenRole.value = portalType;
+        hiddenRole.value = portalType;
 
-    if (portalType === 'admin') {
-        if (cardAdmin) cardAdmin.classList.add('active');
+        if (portalType === 'admin') {
+            if (cardAdmin) cardAdmin.classList.add('active');
 
-        // Show Admin Login Fields
-        loginSchoolWrapper.style.display = 'block';
-        loginEmailWrapper.style.display = 'block';
-        loginIdWrapper.style.display = 'none';
-        document.getElementById('loginSchoolName').setAttribute('required', 'true');
-        document.getElementById('loginEmail').setAttribute('required', 'true');
-        document.getElementById('loginId').removeAttribute('required');
+            // Show Admin Login Fields
+            if (loginSchoolWrapper) loginSchoolWrapper.style.display = 'block';
+            if (loginEmailWrapper) loginEmailWrapper.style.display = 'block';
+            if (loginIdWrapper) loginIdWrapper.style.display = 'none';
+            if (document.getElementById('loginSchoolName')) document.getElementById('loginSchoolName').setAttribute('required', 'true');
+            if (document.getElementById('loginEmail')) document.getElementById('loginEmail').setAttribute('required', 'true');
+            if (document.getElementById('loginId')) document.getElementById('loginId').removeAttribute('required');
 
-        // Show Admin Forgot Fields
-        forgotSchoolWrapper.style.display = 'block';
-        forgotEmailWrapper.style.display = 'block';
-        forgotIdWrapper.style.display = 'none';
-        forgotDobWrapper.style.display = 'none';
-        forgotNewPassWrapper.style.display = 'none';
-        document.getElementById('forgotSchoolName').setAttribute('required', 'true');
-        document.getElementById('forgotEmail').setAttribute('required', 'true');
-        document.getElementById('forgotId').removeAttribute('required');
-        document.getElementById('forgotDob').removeAttribute('required');
-        document.getElementById('forgotNewPass').removeAttribute('required');
+            // Show Admin Forgot Fields
+            if (forgotSchoolWrapper) forgotSchoolWrapper.style.display = 'block';
+            if (forgotEmailWrapper) forgotEmailWrapper.style.display = 'block';
+            if (forgotIdWrapper) forgotIdWrapper.style.display = 'none';
+            if (forgotDobWrapper) forgotDobWrapper.style.display = 'none';
+            if (forgotNewPassWrapper) forgotNewPassWrapper.style.display = 'none';
+            if (document.getElementById('forgotSchoolName')) document.getElementById('forgotSchoolName').setAttribute('required', 'true');
+            if (document.getElementById('forgotEmail')) document.getElementById('forgotEmail').setAttribute('required', 'true');
+            if (document.getElementById('forgotId')) document.getElementById('forgotId').removeAttribute('required');
+            if (document.getElementById('forgotDob')) document.getElementById('forgotDob').removeAttribute('required');
+            if (document.getElementById('forgotNewPass')) document.getElementById('forgotNewPass').removeAttribute('required');
 
-        document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
-    } else {
-        if (cardStaff) cardStaff.classList.add('active');
+            if (document.getElementById('forgotBtn')) document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
+        } else {
+            if (cardStaff) cardStaff.classList.add('active');
 
-        // Show Staff Login Fields
-        loginSchoolWrapper.style.display = 'block';
-        loginEmailWrapper.style.display = 'none';
-        loginIdWrapper.style.display = 'block';
-        document.getElementById('loginSchoolName').setAttribute('required', 'true');
-        document.getElementById('loginEmail').removeAttribute('required');
-        document.getElementById('loginId').setAttribute('required', 'true');
-        document.getElementById('loginId').placeholder = 'Employee ID';
+            // Show Staff Login Fields
+            if (loginSchoolWrapper) loginSchoolWrapper.style.display = 'block';
+            if (loginEmailWrapper) loginEmailWrapper.style.display = 'none';
+            if (loginIdWrapper) loginIdWrapper.style.display = 'block';
+            if (document.getElementById('loginSchoolName')) document.getElementById('loginSchoolName').setAttribute('required', 'true');
+            if (document.getElementById('loginEmail')) document.getElementById('loginEmail').removeAttribute('required');
+            if (document.getElementById('loginId')) document.getElementById('loginId').setAttribute('required', 'true');
+            if (document.getElementById('loginId')) document.getElementById('loginId').placeholder = 'Employee ID';
 
-        // Show Staff Forgot Fields
-        forgotSchoolWrapper.style.display = 'none';
-        forgotEmailWrapper.style.display = 'none';
-        forgotIdWrapper.style.display = 'block';
-        forgotDobWrapper.style.display = 'block';
-        forgotNewPassWrapper.style.display = 'block';
-        document.getElementById('forgotSchoolName').removeAttribute('required');
-        document.getElementById('forgotEmail').removeAttribute('required');
-        document.getElementById('forgotId').setAttribute('required', 'true');
-        document.getElementById('forgotId').placeholder = 'Employee ID';
-        document.getElementById('forgotDob').setAttribute('required', 'true');
-        document.getElementById('forgotNewPass').setAttribute('required', 'true');
+            // Show Staff Forgot Fields
+            if (forgotSchoolWrapper) forgotSchoolWrapper.style.display = 'none';
+            if (forgotEmailWrapper) forgotEmailWrapper.style.display = 'none';
+            if (forgotIdWrapper) forgotIdWrapper.style.display = 'block';
+            if (forgotDobWrapper) forgotDobWrapper.style.display = 'block';
+            if (forgotNewPassWrapper) forgotNewPassWrapper.style.display = 'block';
+            if (document.getElementById('forgotSchoolName')) document.getElementById('forgotSchoolName').removeAttribute('required');
+            if (document.getElementById('forgotEmail')) document.getElementById('forgotEmail').removeAttribute('required');
+            if (document.getElementById('forgotId')) document.getElementById('forgotId').setAttribute('required', 'true');
+            if (document.getElementById('forgotId')) document.getElementById('forgotId').placeholder = 'Employee ID';
+            if (document.getElementById('forgotDob')) document.getElementById('forgotDob').setAttribute('required', 'true');
+            if (document.getElementById('forgotNewPass')) document.getElementById('forgotNewPass').setAttribute('required', 'true');
 
-        document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-key"></i> Reset Password Now';
+            if (document.getElementById('forgotBtn')) document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-key"></i> Reset Password Now';
+        }
+    } catch (err) {
+        console.error('Error in switchLoginPortal:', err);
     }
+}
+
+// Simple helper to switch between auth forms on the login page
+function showSection(section) {
+    // Hide all auth sections (login / forgot / reset / register)
+    document.querySelectorAll('.auth-section').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    const target = document.getElementById(section + 'Section');
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    const err = document.getElementById('loginError');
+    if (err) err.style.display = 'none';
 }
 
 function showRegisterSchool(e) {
@@ -394,7 +436,7 @@ async function handleRegisterSchool(e) {
             body: JSON.stringify(data)
         });
         const result = await res.json();
-        
+
         if (!res.ok) {
             alert(result.msg || 'Registration failed');
         } else {
@@ -407,10 +449,6 @@ async function handleRegisterSchool(e) {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-plus-circle"></i> Register School';
     }
-}
-
-    btn.classList.remove('loading');
-    btn.innerHTML = '<i class="fas fa-plus-circle"></i> Register School';
 }
 
 async function handleForgotPassword(e) {
@@ -432,7 +470,7 @@ async function handleForgotPassword(e) {
             body: JSON.stringify(data)
         });
         const result = await res.json();
-        
+
         alert('If this account exists, a reset link has been sent.');
         showSection('login');
     } catch (err) {
@@ -441,7 +479,6 @@ async function handleForgotPassword(e) {
         btn.classList.remove('loading');
         btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
     }
-}
 }
 
 // ========== STUDENTS CRUD ==========
