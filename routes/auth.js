@@ -39,9 +39,16 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ msg: 'School not found' });
         }
 
+        if (role === 'student') return res.status(403).json({ msg: 'Student panel disabled' });
+
+        let roleQuery = role;
+        if (role === 'staff') {
+            roleQuery = { $in: ['teacher', 'accountant'] };
+        }
+
         const user = await User.findOne({
             schoolId: school._id,
-            role,
+            role: roleQuery,
             $or: [
                 { email: normalizedEmail || '__no_email__' },
                 { username: identifier || '__no_user__' }
@@ -274,14 +281,14 @@ router.post('/forgot-password', async (req, res) => {
         try {
             const transporter = createTransporter();
             const mailOptions = {
-                from: `"${school.schoolName}" <${process.env.EMAIL_USER || 'noreply@campussync.com'}>`,
+                from: `"${school.schoolName}" <${process.env.EMAIL_USER || 'noreply@vidyahms.com'}>`,
                 to: user.email,
                 subject: `Password Reset — ${school.schoolName}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 32px;">
                         <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 28px; border-radius: 16px 16px 0 0; text-align: center;">
                             <h1 style="color: white; margin: 0; font-size: 22px;">🏫 ${school.schoolName}</h1>
-                            <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 13px;">${school.schoolAddress || 'Powered by CampusSync'}</p>
+                            <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 13px;">${school.schoolAddress || 'Powered by Vidya HMS'}</p>
                         </div>
                         <div style="background: white; padding: 32px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                             <h2 style="color: #1e293b; font-size: 18px;">Password Reset Request</h2>

@@ -80,6 +80,23 @@ function toggleStudentSidebar() {
     sidebar.classList.toggle('open');
 }
 
+function toggleAccountantSidebar() {
+    const sidebar = document.getElementById('accountantSidebar');
+    sidebar.classList.toggle('open');
+}
+
+function showAccountantSection(sectionId, element) {
+    document.querySelectorAll('#accountantDashboard .section-page').forEach(el => el.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    document.querySelectorAll('#accountantSidebar .nav-item').forEach(el => el.classList.remove('active'));
+    if (element) element.classList.add('active');
+    
+    if (sectionId === 'accHome') loadAccountantDashboard();
+    if (sectionId === 'accFees') loadAccFees();
+    
+    toggleAccountantSidebar(); // Mobile close
+}
+
 // ========== AUTHENTICATION ==========
 async function handleLogin(e) {
     e.preventDefault();
@@ -122,8 +139,9 @@ async function handleLogin(e) {
         }
 
         // Check role match
-        if (response.user.role !== role) {
-            showLoginError(`This account is not registered as ${role}`);
+        if (response.user.role !== role && !(role === 'staff' && (response.user.role === 'teacher' || response.user.role === 'accountant'))) {
+                throw new Error('You are logging into the wrong portal. Please select correct role.');
+            }`);
             resetLoginBtn();
             return;
         }
@@ -217,44 +235,41 @@ function resetAllSections() {
 
 function showDashboard(role) {
     document.getElementById('loginPage').style.display = 'none';
-    // Always reset all sections to Home first
     resetAllSections();
 
-    // Set school name in UI if available
-    const schoolNameStr = currentUser?.schoolName || localStorage.getItem('schoolName') || 'CampusSync';
+    const schoolNameStr = currentUser?.schoolName || localStorage.getItem('schoolName') || 'Vidya HMS';
     if (document.getElementById('sidebarSchoolName')) document.getElementById('sidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('teacherSidebarSchoolName')) document.getElementById('teacherSidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('studentSidebarSchoolName')) document.getElementById('studentSidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('welcomeSchoolName')) document.getElementById('welcomeSchoolName').textContent = schoolNameStr;
+    if (document.getElementById('accountantSidebarSchoolName')) document.getElementById('accountantSidebarSchoolName').textContent = schoolNameStr;
 
     if (role === 'admin') {
         document.getElementById('adminDashboard').style.display = 'flex';
-        document.getElementById('adminName').textContent = currentUser.name;
-        document.getElementById('adminAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-        loadAdminDashboard();
+        if (document.getElementById('adminName')) document.getElementById('adminName').textContent = currentUser.name;
+        if (document.getElementById('adminAvatar')) document.getElementById('adminAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+        if (typeof loadAdminDashboard === "function") loadAdminDashboard();
     } else if (role === 'teacher') {
         document.getElementById('teacherDashboard').style.display = 'flex';
-        document.getElementById('teacherName').textContent = currentUser.name;
-        document.getElementById('teacherAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-        // Set welcome name in Staff panel
+        if (document.getElementById('teacherName')) document.getElementById('teacherName').textContent = currentUser.name;
+        if (document.getElementById('teacherAvatar')) document.getElementById('teacherAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
         const welcomeEl = document.getElementById('teacherWelcomeName');
         if (welcomeEl) welcomeEl.textContent = currentUser.name;
         if (typeof loadTeacherDashboard === "function") loadTeacherDashboard();
-    } else if (role === 'student') {
-        document.getElementById('studentDashboard').style.display = 'flex';
-        document.getElementById('studentName').textContent = currentUser.name;
-        document.getElementById('studentAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-        const welcomeEl = document.getElementById('studentWelcomeName');
+    } else if (role === 'accountant') {
+        document.getElementById('accountantDashboard').style.display = 'flex';
+        if (document.getElementById('accountantName')) document.getElementById('accountantName').textContent = currentUser.name;
+        
+        const welcomeEl = document.getElementById('accWelcomeName');
         if (welcomeEl) welcomeEl.textContent = currentUser.name;
-        if (typeof loadStudentDashboard === "function") loadStudentDashboard();
+        if (typeof loadAccountantDashboard === "function") loadAccountantDashboard();
     }
 }
 
 // ========== REGISTER SCHOOL & FORGOT PASSWORD TOGGLES ==========
 function switchLoginPortal(portalType) {
     const cardAdmin = document.getElementById('cardAdmin');
-    const cardTeacher = document.getElementById('cardTeacher');
-    const cardStudent = document.getElementById('cardStudent');
+    const cardStaff = document.getElementById('cardStaff');
     const hiddenRole = document.getElementById('hiddenLoginRole');
 
     // Login Form Fields
@@ -271,8 +286,7 @@ function switchLoginPortal(portalType) {
 
     // Reset active class
     if (cardAdmin) cardAdmin.classList.remove('active');
-    if (cardTeacher) cardTeacher.classList.remove('active');
-    if (cardStudent) cardStudent.classList.remove('active');
+    if (cardStaff) cardStaff.classList.remove('active');
 
     hiddenRole.value = portalType;
 
@@ -301,19 +315,18 @@ function switchLoginPortal(portalType) {
 
         document.getElementById('forgotBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
     } else {
-        if (portalType === 'teacher' && cardTeacher) cardTeacher.classList.add('active');
-        if (portalType === 'student' && cardStudent) cardStudent.classList.add('active');
+        if (cardStaff) cardStaff.classList.add('active');
 
-        // Show Staff/Student Login Fields
+        // Show Staff Login Fields
         loginSchoolWrapper.style.display = 'block';
         loginEmailWrapper.style.display = 'none';
         loginIdWrapper.style.display = 'block';
         document.getElementById('loginSchoolName').setAttribute('required', 'true');
         document.getElementById('loginEmail').removeAttribute('required');
         document.getElementById('loginId').setAttribute('required', 'true');
-        document.getElementById('loginId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
+        document.getElementById('loginId').placeholder = 'Employee ID';
 
-        // Show Staff/Student Forgot Fields
+        // Show Staff Forgot Fields
         forgotSchoolWrapper.style.display = 'none';
         forgotEmailWrapper.style.display = 'none';
         forgotIdWrapper.style.display = 'block';
@@ -322,7 +335,7 @@ function switchLoginPortal(portalType) {
         document.getElementById('forgotSchoolName').removeAttribute('required');
         document.getElementById('forgotEmail').removeAttribute('required');
         document.getElementById('forgotId').setAttribute('required', 'true');
-        document.getElementById('forgotId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
+        document.getElementById('forgotId').placeholder = 'Employee ID';
         document.getElementById('forgotDob').setAttribute('required', 'true');
         document.getElementById('forgotNewPass').setAttribute('required', 'true');
 
@@ -371,21 +384,30 @@ async function handleRegisterSchool(e) {
         schoolPhone: document.getElementById('regSchoolPhone').value.trim(),
         schoolAddress: document.getElementById('regSchoolAddress').value.trim(),
         adminName: document.getElementById('regAdminName').value.trim(),
-        adminPassword: document.getElementById('regAdminPassword').value,
-        captchaToken: captchaResponseReg
-    }; try {
-        const response = await api('/api/auth/register-school', 'POST', data);
-        if (response && response.schoolCode) {
-            document.getElementById('registerSchoolForm').reset();
-            alert(`School registered! Your school code is: ${response.schoolCode}\nPlease login with your email and password.`);
-            showLoginForm();
+        adminPassword: document.getElementById('regAdminPassword').value
+    };
+
+    try {
+        const res = await fetch('/api/auth/register-school', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        
+        if (!res.ok) {
+            alert(result.msg || 'Registration failed');
         } else {
-            const errorMsg = response?.errors ? response.errors[0].msg : (response?.msg || 'Registration failed');
-            showLoginError(errorMsg);
+            alert('School registered! You can now login.');
+            showSection('login');
         }
     } catch (err) {
-        showLoginError('Connection error. Try again.');
+        alert('Server error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Register School';
     }
+}
 
     btn.classList.remove('loading');
     btn.innerHTML = '<i class="fas fa-plus-circle"></i> Register School';
@@ -397,272 +419,29 @@ async function handleForgotPassword(e) {
     btn.classList.add('loading');
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
-    const hiddenRole = document.getElementById('hiddenLoginRole').value;
-
-    let endpoint, payload;
-    if (hiddenRole === 'admin') {
-        const schoolName = document.getElementById('forgotSchoolName').value.trim();
-        const email = document.getElementById('forgotEmail').value.trim();
-        endpoint = '/api/auth/forgot-password';
-        payload = { schoolName, email };
-    } else {
-        const schoolName = document.getElementById('loginSchoolName').value.trim();
-        const loginId = document.getElementById('forgotId').value.trim();
-        const dob = document.getElementById('forgotDob').value;
-        const newPassword = document.getElementById('forgotNewPass').value;
-        const role = document.getElementById('forgotRole') ? document.getElementById('forgotRole').value : null;
-
-        endpoint = '/api/auth/reset-dob';
-        payload = { schoolName, loginId, dob, newPassword };
-    }
-
-    const data = await api(endpoint, 'POST', payload);
-    if (data && data.msg) {
-        alert(data.msg);
-        if (hiddenRole !== 'admin') {
-            document.getElementById('forgotPasswordForm').reset();
-        }
-        showLoginForm();
-    } else {
-        showLoginError('Request failed. Check your details.');
-    }
-
-    btn.classList.remove('loading');
-    if (hiddenRole === 'admin') {
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
-    } else {
-        btn.innerHTML = '<i class="fas fa-key"></i> Reset Password Now';
-    }
-}
-
-async function handleResetPassword(e) {
-    e.preventDefault();
-    const btn = document.getElementById('resetBtn');
-    btn.classList.add('loading');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-    if (newPassword !== confirmNewPassword) {
-        showLoginError('Passwords do not match');
-        btn.classList.remove('loading');
-        btn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
-        return;
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const resetToken = urlParams.get('resetToken');
-
-    const data = await api(`/api/auth/reset-password/${resetToken}`, 'POST', { newPassword });
-    if (data && data.msg === 'Password has been reset successfully! You can now login with your new password.') {
-        alert(data.msg);
-        window.history.replaceState({}, document.title, window.location.pathname);
-        showLoginForm();
-    } else {
-        showLoginError('Failed to reset password');
-    }
-
-    btn.classList.remove('loading');
-    btn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
-}
-
-// Check for reset password token in URL on load
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const resetToken = urlParams.get('resetToken');
-    if (resetToken) {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('registerSchoolForm').style.display = 'none';
-        document.getElementById('forgotPasswordForm').style.display = 'none';
-        document.getElementById('resetPasswordForm').style.display = 'block';
-    }
-});
-
-// ========== SECTION NAVIGATION ==========
-function showSection(sectionId, navItem) {
-    // Hide all admin sections
-    document.querySelectorAll('#adminDashboard .section-page').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('#adminDashboard .nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
-
-    // Update header title
-    const titles = {
-        adminHome: ['Dashboard', 'Welcome back! Here\'s your overview.'],
-        adminStudents: ['Students', 'Manage all students'],
-        adminTeachers: ['Teachers', 'Manage teaching staff'],
-        adminFees: ['Fee Management', 'Track and manage fees'],
-        adminAttendance: ['Attendance Records', 'View student attendance logs'],
-        adminResults: ['Results', 'View and manage results'],
-        adminAdmission: ['New Admission', 'Register a new student']
+    const data = {
+        email: document.getElementById('forgotEmail').value.trim(),
+        schoolName: document.getElementById('forgotSchoolName').value.trim(),
+        userId: document.getElementById('forgotId').value.trim()
     };
 
-    if (titles[sectionId]) {
-        document.getElementById('pageTitle').textContent = titles[sectionId][0];
-        document.getElementById('pageSubtitle').textContent = titles[sectionId][1];
-    }
-
-    // Load section data
-    if (sectionId === 'adminStudents') loadStudents();
-    if (sectionId === 'adminTeachers') loadTeachers();
-    if (sectionId === 'adminFees') loadFees();
-    if (sectionId === 'adminAttendance') loadAttendanceRecords();
-    if (sectionId === 'adminResults') loadResults();
-
-    // Close mobile sidebar
-    document.getElementById('sidebar').classList.remove('open');
-    const overlay = document.querySelector('#adminDashboard .sidebar-overlay');
-    if (overlay) overlay.classList.remove('active');
-}
-
-function showTeacherSection(sectionId, navItem) {
-    document.querySelectorAll('#teacherDashboard .section-page').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('#teacherDashboard .nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
-
-    const titles = { teacherHome: 'Dashboard', teacherAttendance: 'Mark Attendance', teacherMarks: 'Upload Marks', teacherStudentList: 'My Students' };
-    document.getElementById('teacherPageTitle').textContent = titles[sectionId] || 'Dashboard';
-
-    if (sectionId === 'teacherStudentList') loadTeacherStudents();
-
-    document.getElementById('teacherSidebar').classList.remove('open');
-}
-
-function showStudentSection(sectionId, navItem) {
-    document.querySelectorAll('#studentDashboard .section-page').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('#studentDashboard .nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
-
-    const titles = { studentHome: 'Dashboard', studentAttendance: 'My Attendance', studentFees: 'My Fees', studentResults: 'My Results', studentHomework: 'Homework' };
-    document.getElementById('studentPageTitle').textContent = titles[sectionId] || 'Dashboard';
-
-    if (sectionId === 'studentAttendance') loadStudentAttendance();
-    if (sectionId === 'studentFees') loadStudentFees();
-    if (sectionId === 'studentResults') loadStudentResults();
-    if (sectionId === 'studentHomework') loadStudentHomework();
-
-    document.getElementById('studentSidebar').classList.remove('open');
-}
-
-// ========== ADMIN DASHBOARD ==========
-async function loadAdminDashboard() {
     try {
-        // Update welcome banner
-        document.getElementById('adminWelcomeName').textContent = currentUser?.name || 'Admin';
-        const now = new Date();
-        const dayEl = document.getElementById('adminDateDay');
-        const monthEl = document.getElementById('adminDateMonth');
-        if (dayEl) dayEl.textContent = now.getDate();
-        if (monthEl) monthEl.textContent = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-
-        const stats = await api('/api/dashboard/stats');
-        if (!stats) return;
-
-        // Stats cards
-        document.getElementById('dashStats').innerHTML = `
-            <div class="stat-card blue">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
-                </div>
-                <div class="stat-value">${stats.totalStudents}</div>
-                <div class="stat-label">Total Students</div>
-            </div>
-            <div class="stat-card violet">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-                </div>
-                <div class="stat-value">${stats.totalTeachers}</div>
-                <div class="stat-label">Total Teachers</div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
-                </div>
-                <div class="stat-value">₹${formatNum(stats.collectedFeeAmount)}</div>
-                <div class="stat-label">Fees Collected</div>
-            </div>
-            <div class="stat-card amber">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                </div>
-                <div class="stat-value">₹${formatNum(stats.pendingFeeAmount)}</div>
-                <div class="stat-label">Fees Pending</div>
-            </div>
-            <div class="stat-card cyan">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
-                </div>
-                <div class="stat-value">${stats.attendancePercentage}%</div>
-                <div class="stat-label">Today's Attendance</div>
-            </div>
-            <div class="stat-card rose">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
-                </div>
-                <div class="stat-value">${stats.pendingFees}</div>
-                <div class="stat-label">Pending Invoices</div>
-            </div>
-        `;
-
-        // Class-wise bar chart
-        if (stats.classWise && stats.classWise.length > 0) {
-            const maxCount = Math.max(...stats.classWise.map(c => c.count));
-            document.getElementById('classChart').innerHTML = stats.classWise.map(c => `
-                <div class="bar-item">
-                    <div class="bar-value">${c.count}</div>
-                    <div class="bar" style="height: ${(c.count / maxCount) * 100}%"></div>
-                    <div class="bar-label">Class ${c._id}</div>
-                </div>
-            `).join('');
-        }
-
-        // Fee donut chart
-        const totalFee = stats.totalFeeAmount || 1;
-        const collectedPct = Math.round((stats.collectedFeeAmount / totalFee) * 100);
-        const pendingPct = 100 - collectedPct;
-        const circumference = 2 * Math.PI * 54;
-        const collectedDash = (collectedPct / 100) * circumference;
-
-        document.getElementById('feeDonut').innerHTML = `
-            <div class="donut-ring">
-                <svg width="140" height="140" viewBox="0 0 140 140">
-                    <circle cx="70" cy="70" r="54" fill="none" stroke="#e2e8f0" stroke-width="14"/>
-                    <circle cx="70" cy="70" r="54" fill="none" stroke="#10b981" stroke-width="14"
-                        stroke-dasharray="${collectedDash} ${circumference}" stroke-linecap="round"/>
-                </svg>
-                <div class="donut-value">
-                    <span>${collectedPct}%</span>
-                    <small>Collected</small>
-                </div>
-            </div>
-            <div class="donut-legend">
-                <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Collected: ₹${formatNum(stats.collectedFeeAmount)}</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Pending: ₹${formatNum(stats.pendingFeeAmount)}</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0"></div> Total: ₹${formatNum(stats.totalFeeAmount)}</div>
-            </div>
-        `;
-
-        // Recent fees (Current Month)
-        const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
-        const fees = await api(`/api/fees?month=${currentMonthName}`);
-        if (fees && fees.length > 0) {
-            document.getElementById('recentFeesTable').innerHTML = fees.slice(0, 8).map(f => `
-                <tr>
-                    <td><strong>${f.student?.name || 'N/A'}</strong></td>
-                    <td>${f.student?.class || '-'}</td>
-                    <td>₹${f.amount}</td>
-                    <td>${f.month}</td>
-                    <td><span class="badge ${f.status.toLowerCase()}">${f.status}</span></td>
-                    <td>${f.paidDate ? new Date(f.paidDate).toLocaleDateString('en-IN') : '-'}</td>
-                </tr>
-            `).join('');
-        }
+        const res = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        
+        alert('If this account exists, a reset link has been sent.');
+        showSection('login');
     } catch (err) {
-        console.error('Dashboard Error:', err);
+        alert('Server error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
     }
+}
 }
 
 // ========== STUDENTS CRUD ==========

@@ -34,6 +34,7 @@ app.use('/api/school', require('./routes/school'));
 app.use('/api/notices', auth, schoolFilter, require('./routes/notices'));
 app.use('/api/students', auth, schoolFilter, require('./routes/students'));
 app.use('/api/teachers', auth, schoolFilter, require('./routes/teachers'));
+app.use('/api/accountants', auth, schoolFilter, require('./routes/accountants'));
 app.use('/api/attendance', auth, schoolFilter, require('./routes/attendance'));
 app.use('/api/fees', auth, schoolFilter, require('./routes/fees'));
 app.use('/api/results', auth, schoolFilter, require('./routes/results'));
@@ -145,6 +146,5 @@ app.get('/', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🏫 Server running on port ${PORT}`);
-    console.log(`📍 Open http://localhost:${PORT} in your browser`);
+    console.log(`Vidya HMS Server Running on port ${PORT}`);
 });

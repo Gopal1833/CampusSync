@@ -64,11 +64,11 @@ const seedDB = async () => {
 
         // ========== Create Teachers ==========
         const teachersData = [
-            { name: 'Rajesh Kumar', employeeId: 'TCH001', subject: 'Mathematics', assignedClasses: ['10', '9', '8'], phone: '9876543211', email: 'rajesh@school.com', gender: 'Male', qualification: 'M.Sc Mathematics', salary: 35000 },
-            { name: 'Priya Sharma', employeeId: 'TCH002', subject: 'Science', assignedClasses: ['10', '9'], phone: '9876543212', email: 'priya@school.com', gender: 'Female', qualification: 'M.Sc Physics', salary: 32000 },
-            { name: 'Amit Singh', employeeId: 'TCH003', subject: 'English', assignedClasses: ['8', '7', '6'], phone: '9876543213', email: 'amit@school.com', gender: 'Male', qualification: 'M.A English', salary: 30000 },
-            { name: 'Sunita Devi', employeeId: 'TCH004', subject: 'Hindi', assignedClasses: ['10', '9', '8', '7'], phone: '9876543214', email: 'sunita@school.com', gender: 'Female', qualification: 'M.A Hindi', salary: 28000 },
-            { name: 'Vikash Prasad', employeeId: 'TCH005', subject: 'Social Science', assignedClasses: ['10', '9'], phone: '9876543215', email: 'vikash@school.com', gender: 'Male', qualification: 'M.A History', salary: 30000 }
+            { name: 'Rajesh Kumar', employeeId: 'TCH001', subject: 'Mathematics', assignedClasses: ['10', '9', '8'], phone: '9876543211', email: 'rajesh@school.com', gender: 'Male', qualification: 'M.Sc Mathematics', salary: 30000, address: 'Test Address' },
+            { name: 'Priya Sharma', employeeId: 'TCH002', subject: 'Science', assignedClasses: ['10', '9'], phone: '9876543212', email: 'priya@school.com', gender: 'Female', qualification: 'M.Sc Physics', salary: 30000, address: 'Test Address' },
+            { name: 'Amit Singh', employeeId: 'TCH003', subject: 'English', assignedClasses: ['8', '7', '6'], phone: '9876543213', email: 'amit@school.com', gender: 'Male', qualification: 'M.A English', salary: 30000, address: 'Test Address' },
+            { name: 'Sunita Devi', employeeId: 'TCH004', subject: 'Hindi', assignedClasses: ['10', '9', '8', '7'], phone: '9876543214', email: 'sunita@school.com', gender: 'Female', qualification: 'M.A Hindi', salary: 30000, address: 'Test Address' },
+            { name: 'Vikash Prasad', employeeId: 'TCH005', subject: 'Social Science', assignedClasses: ['10', '9'], phone: '9876543215', email: 'vikash@school.com', gender: 'Male', qualification: 'M.A History', salary: 30000, address: 'Test Address' }
         ];
 
         for (const td of teachersData) {
