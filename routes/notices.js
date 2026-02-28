@@ -28,7 +28,7 @@ router.post('/', [auth, [
             title,
             description,
             audience,
-            schoolId: req.user.schoolId,
+            schoolId: req.schoolId,
             createdBy: req.user.id
         });
 
@@ -46,7 +46,7 @@ router.post('/', [auth, [
 router.get('/', auth, async (req, res) => {
     try {
         // Build query based on user role
-        let query = { schoolId: req.user.schoolId, isActive: true };
+        let query = { schoolId: req.schoolId, isActive: true };
 
         if (req.user.role === 'student') {
             query.audience = { $in: ['All', 'Students'] };
@@ -74,17 +74,12 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     try {
-        let notice = await Notice.findById(req.params.id);
+        let notice = await Notice.findOne({ _id: req.params.id, schoolId: req.schoolId });
 
         if (!notice) return res.status(404).json({ msg: 'Notice not found' });
 
-        // Ensure notice belongs to same school
-        if (notice.schoolId.toString() !== req.user.schoolId) {
-            return res.status(401).json({ msg: 'Not authorized' });
-        }
-
-        notice = await Notice.findByIdAndUpdate(
-            req.params.id,
+        notice = await Notice.findOneAndUpdate(
+            { _id: req.params.id, schoolId: req.schoolId },
             { $set: req.body },
             { new: true }
         );
@@ -105,16 +100,11 @@ router.delete('/:id', auth, async (req, res) => {
     }
 
     try {
-        let notice = await Notice.findById(req.params.id);
+        let notice = await Notice.findOne({ _id: req.params.id, schoolId: req.schoolId });
 
         if (!notice) return res.status(404).json({ msg: 'Notice not found' });
 
-        // Ensure notice belongs to same school
-        if (notice.schoolId.toString() !== req.user.schoolId) {
-            return res.status(401).json({ msg: 'Not authorized' });
-        }
-
-        await Notice.findByIdAndRemove(req.params.id);
+        await Notice.findOneAndDelete({ _id: req.params.id, schoolId: req.schoolId });
 
         res.json({ msg: 'Notice removed' });
     } catch (err) {

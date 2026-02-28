@@ -26,16 +26,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ========================================
 // API Routes
 // ========================================
+const auth = require('./middleware/auth');
+const schoolFilter = require('./middleware/schoolFilter');
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/school', require('./routes/school'));
-app.use('/api/notices', require('./routes/notices'));
-app.use('/api/students', require('./routes/students'));
-app.use('/api/teachers', require('./routes/teachers'));
-app.use('/api/attendance', require('./routes/attendance'));
-app.use('/api/fees', require('./routes/fees'));
-app.use('/api/results', require('./routes/results'));
-app.use('/api/dashboard', require('./routes/dashboard'));
-app.use('/api/homework', require('./routes/homework'));
+app.use('/api/notices', auth, schoolFilter, require('./routes/notices'));
+app.use('/api/students', auth, schoolFilter, require('./routes/students'));
+app.use('/api/teachers', auth, schoolFilter, require('./routes/teachers'));
+app.use('/api/attendance', auth, schoolFilter, require('./routes/attendance'));
+app.use('/api/fees', auth, schoolFilter, require('./routes/fees'));
+app.use('/api/results', auth, schoolFilter, require('./routes/results'));
+app.use('/api/dashboard', auth, schoolFilter, require('./routes/dashboard'));
+app.use('/api/homework', auth, schoolFilter, require('./routes/homework'));
+app.use('/super-admin/api', require('./routes/superAdmin'));
 
 // ========================================
 // PDF Receipt Generation Endpoint
@@ -43,12 +47,17 @@ app.use('/api/homework', require('./routes/homework'));
 const PDFDocument = require('pdfkit');
 const Fee = require('./models/Fee');
 const Student = require('./models/Student');
-const auth = require('./middleware/auth');
+const School = require('./models/School');
 
-app.get('/api/fees/receipt/:feeId', auth, async (req, res) => {
+app.get('/api/fees/receipt/:feeId', auth, schoolFilter, async (req, res) => {
     try {
-        const fee = await Fee.findById(req.params.feeId).populate('student');
+        const fee = await Fee.findOne({
+            _id: req.params.feeId,
+            schoolId: req.schoolId
+        }).populate('student');
         if (!fee) return res.status(404).json({ msg: 'Fee record not found' });
+
+        const school = await School.findById(req.schoolId);
 
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         res.setHeader('Content-Type', 'application/pdf');
@@ -56,9 +65,16 @@ app.get('/api/fees/receipt/:feeId', auth, async (req, res) => {
         doc.pipe(res);
 
         // Header
-        doc.fontSize(22).font('Helvetica-Bold').text('School Management System', { align: 'center' });
-        doc.fontSize(11).font('Helvetica').text('City, State', { align: 'center' });
-        doc.fontSize(10).text('Phone: +91-XXXXXXXXXX | Email: info@school.com', { align: 'center' });
+        const schoolName = school ? school.schoolName : 'School Management System';
+        doc.fontSize(22).font('Helvetica-Bold').text(schoolName, { align: 'center' });
+        let addressParts = [];
+        if (school && school.schoolAddress) addressParts.push(school.schoolAddress);
+        if (school && school.city) addressParts.push(school.city);
+        if (school && school.state) addressParts.push(school.state);
+        const schoolAddress = addressParts.length > 0 ? addressParts.join(', ') : 'City, State';
+        doc.fontSize(11).font('Helvetica').text(schoolAddress, { align: 'center' });
+        const schoolContact = school ? `Phone: ${school.schoolPhone || '+91-XXXXXXXXXX'} | Email: ${school.schoolEmail || 'info@school.com'}` : 'Phone: +91-XXXXXXXXXX | Email: info@school.com';
+        doc.fontSize(10).text(schoolContact, { align: 'center' });
         doc.moveDown(0.5);
         doc.strokeColor('#2563eb').lineWidth(2).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
         doc.moveDown(1);

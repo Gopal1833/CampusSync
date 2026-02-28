@@ -15,7 +15,7 @@ const mongoose = require('mongoose');
 // @desc    Get overall dashboard statistics
 router.get('/stats', auth, async (req, res) => {
     try {
-        const schoolId = req.user.schoolId;
+        const schoolId = req.schoolId;
         const schoolObjectId = new mongoose.Types.ObjectId(schoolId);
         const totalStudents = await Student.countDocuments({ isActive: true, schoolId });
         const totalTeachers = await Teacher.countDocuments({ isActive: true, schoolId });
@@ -56,11 +56,19 @@ router.get('/stats', auth, async (req, res) => {
         });
 
         // Class-wise student count
-        const classWise = await Student.aggregate([
+        const classWiseData = await Student.aggregate([
             { $match: { isActive: true, schoolId: schoolObjectId } },
-            { $group: { _id: '$class', count: { $sum: 1 } } },
-            { $sort: { _id: 1 } }
+            { $group: { _id: '$class', count: { $sum: 1 } } }
         ]);
+
+        const classWise = classWiseData.sort((a, b) => {
+            const numA = parseInt(a._id);
+            const numB = parseInt(b._id);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            if (!isNaN(numA)) return -1;
+            if (!isNaN(numB)) return 1;
+            return String(a._id).localeCompare(String(b._id));
+        });
 
         // Monthly fee collection
         const monthlyFees = await Fee.aggregate([
@@ -101,22 +109,22 @@ router.get('/stats', auth, async (req, res) => {
 // @desc    Get student-specific dashboard stats
 router.get('/student-stats', auth, async (req, res) => {
     try {
-        const student = await Student.findOne({ userId: req.user.id });
+        const student = await Student.findOne({ userId: req.user.id, schoolId: req.schoolId });
         if (!student) return res.status(404).json({ msg: 'Student profile not found' });
 
         // Attendance summary
-        const attendanceRecords = await Attendance.find({ student: student._id });
+        const attendanceRecords = await Attendance.find({ student: student._id, schoolId: req.schoolId });
         const totalDays = attendanceRecords.length;
         const presentDays = attendanceRecords.filter(a => a.status === 'Present').length;
 
         // Fee summary
-        const fees = await Fee.find({ student: student._id });
+        const fees = await Fee.find({ student: student._id, schoolId: req.schoolId });
         const totalFees = fees.reduce((sum, f) => sum + f.amount, 0);
         const paidFees = fees.reduce((sum, f) => sum + f.paidAmount, 0);
         const pendingFees = fees.filter(f => f.status === 'Pending' || f.status === 'Overdue');
 
         // Recent results
-        const results = await Result.find({ student: student._id }).sort({ createdAt: -1 }).limit(5);
+        const results = await Result.find({ student: student._id, schoolId: req.schoolId }).sort({ createdAt: -1 }).limit(5);
 
         res.json({
             student,

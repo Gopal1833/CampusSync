@@ -9,6 +9,7 @@ const SchoolSchema = new mongoose.Schema({
     schoolEmail: {
         type: String,
         required: true,
+        unique: true,
         trim: true,
         lowercase: true
     },
@@ -17,15 +18,19 @@ const SchoolSchema = new mongoose.Schema({
         required: true
     },
     schoolAddress: {
-        type: String,
-        required: true
+        type: String
+    },
+    city: {
+        type: String
+    },
+    state: {
+        type: String
     },
     schoolLogo: {
         type: String
     },
     schoolCode: {
         type: String,
-        required: true,
         unique: true
     },
     isActive: {
@@ -37,5 +42,14 @@ const SchoolSchema = new mongoose.Schema({
         default: Date.now
     }
 }, { timestamps: true });
+
+SchoolSchema.pre('save', function (next) {
+    if (!this.schoolCode) {
+        const year = new Date().getFullYear();
+        const rand = Math.floor(Math.random() * 9000) + 1000;
+        this.schoolCode = `VH-${year}-${rand}`;
+    }
+    next();
+});
 
 module.exports = mongoose.model('School', SchoolSchema);

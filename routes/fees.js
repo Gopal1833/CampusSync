@@ -12,7 +12,7 @@ const auth = require('../middleware/auth');
 router.get('/', auth, async (req, res) => {
     try {
         const { studentId, status, month, year, class: cls } = req.query;
-        let query = { schoolId: req.user.schoolId };
+        let query = { schoolId: req.schoolId };
 
         if (studentId) query.student = studentId;
         if (status) query.status = status;
@@ -21,13 +21,13 @@ router.get('/', auth, async (req, res) => {
 
         // Students can only view their own fees
         if (req.user.role === 'student') {
-            const student = await Student.findOne({ userId: req.user.id });
+            const student = await Student.findOne({ userId: req.user.id, schoolId: req.schoolId });
             if (student) query.student = student._id;
         }
 
         // Filter by class if provided
         if (cls) {
-            const studentIds = await Student.find({ class: cls, schoolId: req.user.schoolId }).distinct('_id');
+            const studentIds = await Student.find({ class: cls, schoolId: req.schoolId }).distinct('_id');
             query.student = { $in: studentIds };
         }
 
@@ -53,7 +53,7 @@ router.post('/', auth, async (req, res) => {
 
         const feeData = req.body;
         feeData.collectedBy = req.user.id;
-        feeData.schoolId = req.user.schoolId;
+        feeData.schoolId = req.schoolId;
 
         if (feeData.status === 'Paid') {
             feeData.paidAmount = feeData.amount;
@@ -80,12 +80,14 @@ router.put('/:id', auth, async (req, res) => {
 
         const updateData = req.body;
         if (updateData.status === 'Paid') {
-            updateData.paidAmount = updateData.amount || (await Fee.findById(req.params.id)).amount;
+            const existingFee = await Fee.findOne({ _id: req.params.id, schoolId: req.schoolId });
+            if (!existingFee) return res.status(404).json({ msg: 'Fee record not found or unauthorized' });
+            updateData.paidAmount = updateData.amount || existingFee.amount;
             updateData.paidDate = new Date();
         }
 
         const fee = await Fee.findOneAndUpdate(
-            { _id: req.params.id, schoolId: req.user.schoolId },
+            { _id: req.params.id, schoolId: req.schoolId },
             updateData,
             { new: true }
         ).populate('student', 'name rollNumber class section admissionNumber');
@@ -107,7 +109,7 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(403).json({ msg: 'Not authorized' });
         }
 
-        const fee = await Fee.findOneAndDelete({ _id: req.params.id, schoolId: req.user.schoolId });
+        const fee = await Fee.findOneAndDelete({ _id: req.params.id, schoolId: req.schoolId });
         if (!fee) return res.status(404).json({ msg: 'Fee record not found or unauthorized' });
 
         res.json({ msg: 'Fee record deleted' });
@@ -122,12 +124,12 @@ router.delete('/:id', auth, async (req, res) => {
 router.get('/summary/overview', auth, async (req, res) => {
     try {
         const totalFees = await Fee.aggregate([
-            { $match: { schoolId: req.user.schoolId } },
+            { $match: { schoolId: req.schoolId } },
             { $group: { _id: null, total: { $sum: '$amount' }, collected: { $sum: '$paidAmount' } } }
         ]);
 
-        const pendingCount = await Fee.countDocuments({ status: 'Pending', schoolId: req.user.schoolId });
-        const paidCount = await Fee.countDocuments({ status: 'Paid', schoolId: req.user.schoolId });
+        const pendingCount = await Fee.countDocuments({ status: 'Pending', schoolId: req.schoolId });
+        const paidCount = await Fee.countDocuments({ status: 'Paid', schoolId: req.schoolId });
 
         res.json({
             totalAmount: totalFees[0]?.total || 0,

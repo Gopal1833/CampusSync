@@ -27,24 +27,28 @@ const createTransporter = () => {
 // @desc    Login user & get token
 router.post('/login', async (req, res) => {
     try {
-        const { schoolName, email, password, loginId, role } = req.body;
+        const { schoolName, email, userId, loginId, password, role } = req.body;
+        const identifier = (userId || loginId || '').trim();
+        const normalizedEmail = (email || '').trim().toLowerCase();
 
-        let user, school;
-
-        if (role === 'admin') {
-            school = await School.findOne({ schoolName: new RegExp(`^${schoolName.trim()}$`, 'i') });
-            if (!school) {
-                return res.status(400).json({ msg: 'School not found. Please check the spelling.' });
-            }
-            user = await User.findOne({ email, schoolId: school._id });
-        } else {
-            user = await User.findOne({ username: loginId });
-            if (user) {
-                school = await School.findById(user.schoolId);
-            }
+        const school = await School.findOne({
+            schoolName: { $regex: new RegExp(`^${(schoolName || '').trim()}$`, 'i') },
+            isActive: true
+        });
+        if (!school) {
+            return res.status(400).json({ msg: 'School not found' });
         }
 
-        if (!user || !school) {
+        const user = await User.findOne({
+            schoolId: school._id,
+            role,
+            $or: [
+                { email: normalizedEmail || '__no_email__' },
+                { username: identifier || '__no_user__' }
+            ]
+        });
+
+        if (!user) {
             return res.status(400).json({ msg: 'Invalid credentials' });
         }
 
@@ -65,18 +69,17 @@ router.post('/login', async (req, res) => {
 
         // Create JWT payload
         const payload = {
-            user: {
-                id: user._id,
-                role: user.role,
-                name: user.name,
-                email: user.email,
-                profileId: user.profileId,
-                schoolId: school._id
-            }
+            id: user._id,
+            role: user.role,
+            name: user.name,
+            email: user.email,
+            profileId: user.profileId,
+            schoolId: school._id,
+            schoolName: school.schoolName
         };
 
         // Sign token
-        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '12h' }, (err, token) => {
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' }, (err, token) => {
             if (err) throw err;
             res.json({
                 token,
@@ -86,6 +89,7 @@ router.post('/login', async (req, res) => {
                     role: user.role,
                     email: user.email,
                     profileId: user.profileId,
+                    schoolId: school._id,
                     schoolName: school.schoolName
                 }
             });
@@ -140,7 +144,7 @@ router.post('/register', auth, async (req, res) => {
 // @desc    Get current user
 router.get('/me', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = await User.findOne({ _id: req.user.id, schoolId: req.user.schoolId }).select('-password');
         res.json(user);
     } catch (err) {
         console.error(err.message);
@@ -153,7 +157,10 @@ router.get('/me', auth, async (req, res) => {
 router.put('/change-password', auth, async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        const user = await User.findById(req.user.id);
+        const user = await User.findOne({ _id: req.user.id, schoolId: req.user.schoolId });
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
 
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
@@ -171,6 +178,53 @@ router.put('/change-password', auth, async (req, res) => {
     }
 });
 
+// @route   POST /api/auth/register-school
+// @desc    Register a school and its admin
+router.post('/register-school', async (req, res) => {
+    try {
+        const {
+            schoolName, schoolEmail, schoolPhone,
+            schoolAddress, adminName, adminPassword
+        } = req.body;
+
+        const existingSchool = await School.findOne({ schoolEmail: schoolEmail?.toLowerCase().trim() });
+        if (existingSchool) {
+            return res.status(400).json({ msg: 'A school with this email already exists' });
+        }
+
+        const school = new School({
+            schoolName,
+            schoolEmail: schoolEmail?.toLowerCase().trim(),
+            schoolPhone,
+            schoolAddress,
+            isActive: true
+        });
+        await school.save();
+
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+        const adminUser = new User({
+            username: 'admin',
+            email: school.schoolEmail,
+            password: hashedPassword,
+            role: 'admin',
+            name: adminName,
+            schoolId: school._id
+        });
+        await adminUser.save();
+
+        res.status(201).json({
+            msg: 'School registered successfully! You can now login.',
+            schoolCode: school.schoolCode,
+            schoolId: school._id
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error during registration' });
+    }
+});
+
 // ========================================
 // FORGOT PASSWORD
 // ========================================
@@ -185,7 +239,7 @@ router.post('/forgot-password', async (req, res) => {
         }
 
         // Find school first
-        const school = await School.findOne({ schoolName: new RegExp(`^${schoolName.trim()}$`, 'i') });
+        const school = await School.findOne({ schoolName: new RegExp(`^${schoolName.trim()}$`, 'i'), isActive: true });
         if (!school) {
             return res.json({ msg: 'If this email and school name match our records, a password reset link has been sent.' });
         }
@@ -320,17 +374,22 @@ router.post('/reset-password/:token', async (req, res) => {
 // @desc    Reset password using Date of Birth
 router.post('/reset-dob', async (req, res) => {
     try {
-        const { loginId, dob, newPassword } = req.body;
+        const { schoolName, loginId, dob, newPassword } = req.body;
 
-        if (!loginId || !dob || !newPassword) {
-            return res.status(400).json({ msg: 'Please provide User ID, Date of Birth, and New Password' });
+        if (!schoolName || !loginId || !dob || !newPassword) {
+            return res.status(400).json({ msg: 'Please provide School Name, User ID, Date of Birth, and New Password' });
         }
 
         if (newPassword.length < 6) {
             return res.status(400).json({ msg: 'Password must be at least 6 characters long' });
         }
 
-        const user = await User.findOne({ username: loginId });
+        const school = await School.findOne({ schoolName: new RegExp(`^${schoolName.trim()}$`, 'i'), isActive: true });
+        if (!school) {
+            return res.status(404).json({ msg: 'School not found' });
+        }
+
+        const user = await User.findOne({ username: loginId, schoolId: school._id });
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
@@ -338,7 +397,7 @@ router.post('/reset-dob', async (req, res) => {
         let profileMatch = false;
         if (user.role === 'student') {
             const Student = require('../models/Student');
-            const student = await Student.findOne({ _id: user.profileId });
+            const student = await Student.findOne({ _id: user.profileId, schoolId: school._id });
             if (student && student.dateOfBirth) {
                 const storedDob = new Date(student.dateOfBirth).toISOString().split('T')[0];
                 const inputDob = new Date(dob).toISOString().split('T')[0];
@@ -346,7 +405,7 @@ router.post('/reset-dob', async (req, res) => {
             }
         } else if (user.role === 'teacher') {
             const Teacher = require('../models/Teacher');
-            const teacher = await Teacher.findOne({ _id: user.profileId });
+            const teacher = await Teacher.findOne({ _id: user.profileId, schoolId: school._id });
             if (teacher && teacher.dateOfBirth) {
                 const storedDob = new Date(teacher.dateOfBirth).toISOString().split('T')[0];
                 const inputDob = new Date(dob).toISOString().split('T')[0];

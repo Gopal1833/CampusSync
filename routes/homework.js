@@ -12,19 +12,19 @@ const auth = require('../middleware/auth');
 // @desc    Get homework (filtered by role)
 router.get('/', auth, async (req, res) => {
     try {
-        let query = { isActive: true, schoolId: req.user.schoolId };
+        let query = { isActive: true, schoolId: req.schoolId };
         const { class: cls, section } = req.query;
 
         if (req.user.role === 'student') {
             // Students see homework for their class
-            const student = await Student.findOne({ userId: req.user.id });
+            const student = await Student.findOne({ userId: req.user.id, schoolId: req.schoolId });
             if (student) {
                 query.class = student.class;
                 query.section = student.section;
             }
         } else if (req.user.role === 'teacher') {
             // Teachers see only their homework
-            const teacher = await Teacher.findOne({ userId: req.user.id });
+            const teacher = await Teacher.findOne({ userId: req.user.id, schoolId: req.schoolId });
             if (teacher) {
                 query.teacher = teacher._id;
             }
@@ -63,7 +63,7 @@ router.post('/', auth, async (req, res) => {
 
         let teacherId, teacherName;
         if (req.user.role === 'teacher') {
-            const teacher = await Teacher.findOne({ userId: req.user.id });
+            const teacher = await Teacher.findOne({ userId: req.user.id, schoolId: req.schoolId });
             if (!teacher) return res.status(404).json({ msg: 'Teacher profile not found' });
             teacherId = teacher._id;
             teacherName = teacher.name;
@@ -75,7 +75,7 @@ router.post('/', auth, async (req, res) => {
                 // Create a placeholder
                 teacherName = req.user.name;
                 // Try to find any teacher
-                const anyTeacher = await Teacher.findOne({ isActive: true });
+                const anyTeacher = await Teacher.findOne({ isActive: true, schoolId: req.schoolId });
                 teacherId = anyTeacher ? anyTeacher._id : null;
                 if (!teacherId) return res.status(400).json({ msg: 'No teacher available' });
             }
@@ -90,7 +90,7 @@ router.post('/', auth, async (req, res) => {
             title,
             description,
             dueDate: new Date(dueDate),
-            schoolId: req.user.schoolId
+            schoolId: req.schoolId
         });
 
         await homework.save();
@@ -110,7 +110,7 @@ router.put('/:id', auth, async (req, res) => {
         }
 
         const homework = await Homework.findOneAndUpdate(
-            { _id: req.params.id, schoolId: req.user.schoolId },
+            { _id: req.params.id, schoolId: req.schoolId },
             req.body,
             { new: true }
         );
@@ -132,7 +132,7 @@ router.delete('/:id', auth, async (req, res) => {
         }
 
         const homework = await Homework.findOneAndUpdate(
-            { _id: req.params.id, schoolId: req.user.schoolId },
+            { _id: req.params.id, schoolId: req.schoolId },
             { isActive: false }
         );
         if (!homework) return res.status(404).json({ msg: 'Homework not found or unauthorized' });
@@ -151,10 +151,10 @@ router.post('/:id/submit', auth, async (req, res) => {
             return res.status(403).json({ msg: 'Only students can submit homework' });
         }
 
-        const homework = await Homework.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
+        const homework = await Homework.findOne({ _id: req.params.id, schoolId: req.schoolId });
         if (!homework) return res.status(404).json({ msg: 'Homework not found' });
 
-        const student = await Student.findOne({ userId: req.user.id });
+        const student = await Student.findOne({ userId: req.user.id, schoolId: req.schoolId });
         if (!student) return res.status(404).json({ msg: 'Student not found' });
 
         // Check if already submitted

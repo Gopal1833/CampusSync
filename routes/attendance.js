@@ -12,7 +12,7 @@ const auth = require('../middleware/auth');
 router.get('/', auth, async (req, res) => {
     try {
         const { class: cls, section, date, studentId } = req.query;
-        let query = { schoolId: req.user.schoolId };
+        let query = { schoolId: req.schoolId };
 
         if (cls) query.class = cls;
         if (section) query.section = section;
@@ -27,7 +27,7 @@ router.get('/', auth, async (req, res) => {
 
         // Students can only view their own attendance
         if (req.user.role === 'student') {
-            const student = await Student.findOne({ userId: req.user.id });
+            const student = await Student.findOne({ userId: req.user.id, schoolId: req.schoolId });
             if (student) query.student = student._id;
         }
 
@@ -61,7 +61,7 @@ router.post('/bulk', auth, async (req, res) => {
                     {
                         student: record.studentId,
                         date: new Date(date),
-                        schoolId: req.user.schoolId
+                        schoolId: req.schoolId
                     },
                     {
                         student: record.studentId,
@@ -71,7 +71,7 @@ router.post('/bulk', auth, async (req, res) => {
                         status: record.status,
                         markedBy: req.user.id,
                         remarks: record.remarks || '',
-                        schoolId: req.user.schoolId
+                        schoolId: req.schoolId
                     },
                     { upsert: true, new: true }
                 );
@@ -92,7 +92,7 @@ router.post('/bulk', auth, async (req, res) => {
 // @desc    Get attendance summary for a student
 router.get('/summary/:studentId', auth, async (req, res) => {
     try {
-        const records = await Attendance.find({ student: req.params.studentId, schoolId: req.user.schoolId });
+        const records = await Attendance.find({ student: req.params.studentId, schoolId: req.schoolId });
         const total = records.length;
         const present = records.filter(r => r.status === 'Present').length;
         const absent = records.filter(r => r.status === 'Absent').length;

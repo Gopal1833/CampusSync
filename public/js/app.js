@@ -6,6 +6,8 @@ const API = '';
 let token = localStorage.getItem('token');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 
+// ========== CAPTCHA ========== 
+
 // ========== API HELPER ==========
 async function api(endpoint, method = 'GET', body = null) {
     try {
@@ -97,11 +99,17 @@ async function handleLogin(e) {
         role,
         password: document.getElementById('loginPassword').value
     };
-
     if (role === 'admin') {
-        data.schoolName = document.getElementById('loginSchoolName').value.trim();
+        const schoolName = document.getElementById('loginSchoolName').value.trim();
+        if (!schoolName) {
+            showLoginError('School name is required');
+            resetLoginBtn();
+            return;
+        }
+        data.schoolName = schoolName;
         data.email = document.getElementById('loginEmail').value.trim();
     } else {
+        data.schoolName = document.getElementById('loginSchoolName').value.trim() || '';
         data.loginId = document.getElementById('loginId').value.trim();
     }
 
@@ -124,6 +132,8 @@ async function handleLogin(e) {
         currentUser = response.user;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(currentUser));
+        localStorage.setItem('schoolName', currentUser.schoolName || '');
+        localStorage.setItem('schoolId', currentUser.schoolId || '');
 
         showDashboard(currentUser.role);
     } catch (err) {
@@ -149,6 +159,8 @@ function logout() {
     currentUser = null;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('schoolName');
+    localStorage.removeItem('schoolId');
     document.getElementById('loginPage').style.display = '';
     document.getElementById('adminDashboard').style.display = 'none';
     document.getElementById('teacherDashboard').style.display = 'none';
@@ -209,7 +221,7 @@ function showDashboard(role) {
     resetAllSections();
 
     // Set school name in UI if available
-    const schoolNameStr = currentUser?.schoolName || 'CampusSync';
+    const schoolNameStr = currentUser?.schoolName || localStorage.getItem('schoolName') || 'CampusSync';
     if (document.getElementById('sidebarSchoolName')) document.getElementById('sidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('teacherSidebarSchoolName')) document.getElementById('teacherSidebarSchoolName').textContent = schoolNameStr;
     if (document.getElementById('studentSidebarSchoolName')) document.getElementById('studentSidebarSchoolName').textContent = schoolNameStr;
@@ -293,10 +305,10 @@ function switchLoginPortal(portalType) {
         if (portalType === 'student' && cardStudent) cardStudent.classList.add('active');
 
         // Show Staff/Student Login Fields
-        loginSchoolWrapper.style.display = 'none';
+        loginSchoolWrapper.style.display = 'block';
         loginEmailWrapper.style.display = 'none';
         loginIdWrapper.style.display = 'block';
-        document.getElementById('loginSchoolName').removeAttribute('required');
+        document.getElementById('loginSchoolName').setAttribute('required', 'true');
         document.getElementById('loginEmail').removeAttribute('required');
         document.getElementById('loginId').setAttribute('required', 'true');
         document.getElementById('loginId').placeholder = portalType === 'teacher' ? 'Employee Number' : 'Admission Number';
@@ -320,6 +332,7 @@ function switchLoginPortal(portalType) {
 
 function showRegisterSchool(e) {
     if (e) e.preventDefault();
+    if (e) e.preventDefault();
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('forgotPasswordForm').style.display = 'none';
     document.getElementById('resetPasswordForm').style.display = 'none';
@@ -328,6 +341,7 @@ function showRegisterSchool(e) {
 }
 
 function showLoginForm(e) {
+    if (e) e.preventDefault();
     if (e) e.preventDefault();
     document.getElementById('registerSchoolForm').style.display = 'none';
     document.getElementById('forgotPasswordForm').style.display = 'none';
@@ -357,14 +371,13 @@ async function handleRegisterSchool(e) {
         schoolPhone: document.getElementById('regSchoolPhone').value.trim(),
         schoolAddress: document.getElementById('regSchoolAddress').value.trim(),
         adminName: document.getElementById('regAdminName').value.trim(),
-        adminPassword: document.getElementById('regAdminPassword').value
-    };
-
-    try {
-        const response = await api('/api/school/register-school', 'POST', data);
+        adminPassword: document.getElementById('regAdminPassword').value,
+        captchaToken: captchaResponseReg
+    }; try {
+        const response = await api('/api/auth/register-school', 'POST', data);
         if (response && response.schoolCode) {
             document.getElementById('registerSchoolForm').reset();
-            alert('School registered! You can now log in.');
+            alert(`School registered! Your school code is: ${response.schoolCode}\nPlease login with your email and password.`);
             showLoginForm();
         } else {
             const errorMsg = response?.errors ? response.errors[0].msg : (response?.msg || 'Registration failed');
@@ -393,13 +406,14 @@ async function handleForgotPassword(e) {
         endpoint = '/api/auth/forgot-password';
         payload = { schoolName, email };
     } else {
+        const schoolName = document.getElementById('loginSchoolName').value.trim();
         const loginId = document.getElementById('forgotId').value.trim();
         const dob = document.getElementById('forgotDob').value;
         const newPassword = document.getElementById('forgotNewPass').value;
         const role = document.getElementById('forgotRole') ? document.getElementById('forgotRole').value : null;
 
         endpoint = '/api/auth/reset-dob';
-        payload = { loginId, dob, newPassword };
+        payload = { schoolName, loginId, dob, newPassword };
     }
 
     const data = await api(endpoint, 'POST', payload);
@@ -631,8 +645,9 @@ async function loadAdminDashboard() {
             </div>
         `;
 
-        // Recent fees
-        const fees = await api('/api/fees?limit=10');
+        // Recent fees (Current Month)
+        const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
+        const fees = await api(`/api/fees?month=${currentMonthName}`);
         if (fees && fees.length > 0) {
             document.getElementById('recentFeesTable').innerHTML = fees.slice(0, 8).map(f => `
                 <tr>
@@ -1417,95 +1432,11 @@ function formatNum(num) {
     return num?.toString() || '0';
 }
 
-// ========== FORGOT PASSWORD ==========
-function showForgotPassword(e) {
-    e.preventDefault();
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('forgotPasswordForm').style.display = 'block';
-    document.getElementById('resetPasswordForm').style.display = 'none';
-    document.getElementById('loginError').style.display = 'none';
-}
-
-
 function showResetForm() {
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('forgotPasswordForm').style.display = 'none';
     document.getElementById('resetPasswordForm').style.display = 'block';
     document.getElementById('loginError').style.display = 'none';
-}
-
-async function handleForgotPassword(e) {
-    e.preventDefault();
-    const email = document.getElementById('forgotEmail').value.trim();
-    if (!email) return showToast('Please enter your email', 'warning');
-
-    const btn = document.getElementById('forgotBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    btn.classList.add('loading');
-
-    try {
-        const result = await api('/api/auth/forgot-password', 'POST', { email });
-        if (result) {
-            showToast(result.msg || 'Reset link sent! Check your email.', 'success');
-            // For development: if token returned, show it
-            if (result.resetToken) {
-                console.log('Reset Token (dev):', result.resetToken);
-            }
-        }
-    } catch (err) {
-        showToast('Error sending reset link', 'error');
-    }
-
-    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reset Link';
-    btn.classList.remove('loading');
-}
-
-async function handleResetPassword(e) {
-    e.preventDefault();
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmNewPassword').value;
-
-    if (newPassword.length < 6) {
-        return showToast('Password must be at least 6 characters', 'warning');
-    }
-    if (newPassword !== confirmPassword) {
-        return showToast('Passwords do not match', 'error');
-    }
-
-    // Get token from URL hash
-    const hash = window.location.hash;
-    const tokenMatch = hash.match(/token=(.+)/);
-    if (!tokenMatch) {
-        return showToast('Invalid reset link', 'error');
-    }
-
-    const resetToken = tokenMatch[1];
-    const btn = document.getElementById('resetBtn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-    btn.classList.add('loading');
-
-    try {
-        const response = await fetch(`${API}/api/auth/reset-password/${resetToken}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ newPassword })
-        });
-        const result = await response.json();
-
-        if (response.ok) {
-            showToast(result.msg || 'Password reset successfully!', 'success');
-            // Clear hash and go to login
-            window.location.hash = '';
-            setTimeout(() => showLoginForm(), 1500);
-        } else {
-            showToast(result.msg || 'Error resetting password', 'error');
-        }
-    } catch (err) {
-        showToast('Error resetting password', 'error');
-    }
-
-    btn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
-    btn.classList.remove('loading');
 }
 
 // ========== HOMEWORK MANAGEMENT ==========

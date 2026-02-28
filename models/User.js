@@ -45,7 +45,8 @@ const UserSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: true
+        required: true,
+        index: true
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date

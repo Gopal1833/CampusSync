@@ -13,7 +13,7 @@ const auth = require('../middleware/auth');
 router.get('/', auth, async (req, res) => {
     try {
         const { class: cls, section, search } = req.query;
-        let query = { isActive: true, schoolId: req.user.schoolId };
+        let query = { isActive: true, schoolId: req.schoolId };
 
         if (cls) query.class = cls;
         if (section) query.section = section;
@@ -42,7 +42,7 @@ router.get('/', auth, async (req, res) => {
 // @desc    Get student by ID
 router.get('/:id', auth, async (req, res) => {
     try {
-        const student = await Student.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
+        const student = await Student.findOne({ _id: req.params.id, schoolId: req.schoolId });
         if (!student) return res.status(404).json({ msg: 'Student not found' });
         res.json(student);
     } catch (err) {
@@ -67,18 +67,18 @@ router.post('/', auth, async (req, res) => {
             let isUnique = false;
             while (!isUnique) {
                 admissionNumber = 'STU' + Math.floor(10000 + Math.random() * 90000);
-                const existing = await Student.findOne({ admissionNumber, schoolId: req.user.schoolId });
+                const existing = await Student.findOne({ admissionNumber, schoolId: req.schoolId });
                 if (!existing) isUnique = true;
             }
         } else {
             // Check if admin-provided ID is already taken
-            const existing = await Student.findOne({ admissionNumber, schoolId: req.user.schoolId });
+            const existing = await Student.findOne({ admissionNumber, schoolId: req.schoolId });
             if (existing) {
                 return res.status(400).json({ msg: `Admission number "${admissionNumber}" already exists` });
             }
         }
 
-        const studentData = { ...req.body, admissionNumber, schoolId: req.user.schoolId };
+        const studentData = { ...req.body, admissionNumber, schoolId: req.schoolId };
 
         const student = new Student(studentData);
         await student.save();
@@ -98,7 +98,7 @@ router.post('/', auth, async (req, res) => {
             name: studentData.name,
             phone: studentData.phone,
             profileId: student._id,
-            schoolId: req.user.schoolId
+            schoolId: req.schoolId
         });
         await user.save();
 
@@ -125,7 +125,7 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(403).json({ msg: 'Not authorized' });
         }
 
-        let student = await Student.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
+        let student = await Student.findOne({ _id: req.params.id, schoolId: req.schoolId });
         if (!student) return res.status(404).json({ msg: 'Student not found' });
 
         student = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -156,7 +156,7 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(403).json({ msg: 'Not authorized' });
         }
 
-        let student = await Student.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
+        let student = await Student.findOne({ _id: req.params.id, schoolId: req.schoolId });
         if (!student) return res.status(404).json({ msg: 'Student not found' });
 
         student = await Student.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });

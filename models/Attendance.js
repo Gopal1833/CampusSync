@@ -37,7 +37,8 @@ const AttendanceSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
-        required: true
+        required: true,
+        index: true
     }
 }, { timestamps: true });
 

@@ -13,19 +13,38 @@ const Teacher = require('./models/Teacher');
 const Fee = require('./models/Fee');
 const Attendance = require('./models/Attendance');
 const Result = require('./models/Result');
+const School = require('./models/School');
 
 const seedDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB');
 
+        let school = await School.findOne({
+            schoolEmail: 'admin@saicentralschool.edu.in'
+        });
+
+        if (!school) {
+            school = new School({
+                schoolName: 'SAI Central Public School',
+                schoolEmail: 'admin@saicentralschool.edu.in',
+                schoolPhone: '9876543210',
+                schoolAddress: 'Anytown, Bihar',
+                isActive: true
+            });
+            await school.save();
+        }
+
+        const schoolId = school._id;
+        console.log(`Seeding school: ${school.schoolName} (${school.schoolCode})`);
+
         // Clear existing data
-        await User.deleteMany({});
-        await Student.deleteMany({});
-        await Teacher.deleteMany({});
-        await Fee.deleteMany({});
-        await Attendance.deleteMany({});
-        await Result.deleteMany({});
+        await User.deleteMany({ schoolId });
+        await Student.deleteMany({ schoolId });
+        await Teacher.deleteMany({ schoolId });
+        await Fee.deleteMany({ schoolId });
+        await Attendance.deleteMany({ schoolId });
+        await Result.deleteMany({ schoolId });
         console.log('Cleared existing data');
 
         const salt = await bcrypt.genSalt(10);
@@ -37,7 +56,8 @@ const seedDB = async () => {
             role: 'admin',
             name: 'Principal Admin',
             email: 'admin@saicentralschool.edu.in',
-            phone: '9876543210'
+            phone: '9876543210',
+            schoolId
         });
         await adminUser.save();
         console.log('✅ Admin created: admin / admin123');
@@ -52,7 +72,7 @@ const seedDB = async () => {
         ];
 
         for (const td of teachersData) {
-            const teacher = new Teacher(td);
+            const teacher = new Teacher({ ...td, schoolId });
             await teacher.save();
 
             const teacherUser = new User({
@@ -62,7 +82,8 @@ const seedDB = async () => {
                 name: td.name,
                 email: td.email,
                 phone: td.phone,
-                profileId: teacher._id
+                profileId: teacher._id,
+                schoolId
             });
             await teacherUser.save();
             teacher.userId = teacherUser._id;
@@ -86,7 +107,7 @@ const seedDB = async () => {
 
         const savedStudents = [];
         for (const sd of studentsData) {
-            const student = new Student(sd);
+            const student = new Student({ ...sd, schoolId });
             await student.save();
 
             const studentUser = new User({
@@ -96,7 +117,8 @@ const seedDB = async () => {
                 name: sd.name,
                 email: sd.email,
                 phone: sd.phone,
-                profileId: student._id
+                profileId: student._id,
+                schoolId
             });
             await studentUser.save();
             student.userId = studentUser._id;
@@ -120,7 +142,8 @@ const seedDB = async () => {
                     paidAmount: isPaid ? 2500 : 0,
                     paidDate: isPaid ? new Date() : null,
                     paymentMethod: isPaid ? 'Cash' : undefined,
-                    dueDate: new Date(2025, months.indexOf(month), 15)
+                    dueDate: new Date(2025, months.indexOf(month), 15),
+                    schoolId
                 });
                 await fee.save();
             }
@@ -128,7 +151,7 @@ const seedDB = async () => {
         console.log('✅ Fee records created');
 
         // ========== Create Attendance ==========
-        const statuses = ['Present', 'Present', 'Present', 'Present', 'Absent', 'Late'];
+        const statuses = ['Present', 'Present', 'Present', 'Present', 'Absent', 'Half-Day'];
         for (const student of savedStudents) {
             for (let day = 1; day <= 20; day++) {
                 const attendance = new Attendance({
@@ -136,7 +159,8 @@ const seedDB = async () => {
                     class: student.class,
                     section: student.section,
                     date: new Date(2025, 1, day),
-                    status: statuses[Math.floor(Math.random() * statuses.length)]
+                    status: statuses[Math.floor(Math.random() * statuses.length)],
+                    schoolId
                 });
                 await attendance.save();
             }
@@ -159,6 +183,7 @@ const seedDB = async () => {
                 section: student.section,
                 examType: 'Half Yearly',
                 academicYear: '2024-2025',
+                schoolId,
                 subjects: subjects.map(s => ({
                     ...s,
                     obtainedMarks: Math.floor(Math.random() * 60) + 40
@@ -167,6 +192,7 @@ const seedDB = async () => {
             await result.save();
         }
         console.log('✅ Result records created');
+        console.log(`School code: ${school.schoolCode}`);
 
         console.log('\n========================================');
         console.log('🎉 Database seeded successfully!');
