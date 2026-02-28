@@ -72,12 +72,16 @@ function toggleSidebar() {
 
 function toggleTeacherSidebar() {
     const sidebar = document.getElementById('teacherSidebar');
+    const overlay = document.querySelector('#teacherDashboard .sidebar-overlay');
     sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
 }
 
 function toggleStudentSidebar() {
     const sidebar = document.getElementById('studentSidebar');
+    const overlay = document.querySelector('#studentDashboard .sidebar-overlay');
     sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
 }
 
 function toggleAccountantSidebar() {
@@ -93,8 +97,64 @@ function showAccountantSection(sectionId, element) {
 
     if (sectionId === 'accHome') loadAccountantDashboard();
     if (sectionId === 'accFees') loadAccFees();
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('accountantSidebar');
+        if (sidebar) sidebar.classList.remove('open');
+    }
+}
 
-    toggleAccountantSidebar(); // Mobile close
+function showAdminSection(sectionId, element) {
+    console.log('[Routing] showAdminSection called for:', sectionId);
+
+    // Hide all section pages
+    const sections = document.querySelectorAll('#adminDashboard .section-page');
+    console.log('[Routing] Found', sections.length, 'section-pages in Admin Dashboard. Removing active class from all.');
+    sections.forEach(el => el.classList.remove('active'));
+
+    // Show target section page
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        console.log('[Routing] Target section found. Adding active class.');
+        targetSection.classList.add('active');
+    } else {
+        console.error('[Routing] ERROR: Target section not found in DOM:', sectionId);
+    }
+
+    // Toggle sidebar items active state
+    document.querySelectorAll('#sidebar .nav-item').forEach(el => el.classList.remove('active'));
+    if (element) {
+        element.classList.add('active');
+    }
+
+    if (sectionId === 'adminHome') { if (typeof loadAdminDashboard === 'function') loadAdminDashboard(); }
+    else if (sectionId === 'adminStudents') loadStudents();
+    else if (sectionId === 'adminTeachers') loadTeachers();
+    else if (sectionId === 'adminFees') loadFees();
+    else if (sectionId === 'adminAttendance') loadAttendanceRecords();
+    else if (sectionId === 'adminResults') loadResults();
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('#adminDashboard .sidebar-overlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    }
+}
+
+function showTeacherSection(sectionId, element) {
+    document.querySelectorAll('#teacherDashboard .section-page').forEach(el => el.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    document.querySelectorAll('#teacherSidebar .nav-item').forEach(el => el.classList.remove('active'));
+    if (element) element.classList.add('active');
+
+    if (sectionId === 'teacherHome') { if (typeof loadTeacherDashboard === 'function') loadTeacherDashboard(); }
+    else if (sectionId === 'teacherAttendance') loadTeacherAttendanceStudents();
+    else if (sectionId === 'teacherStudentList') loadTeacherStudents();
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('teacherSidebar');
+        const overlay = document.querySelector('#teacherDashboard .sidebar-overlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    }
 }
 
 // ========== AUTHENTICATION ==========
@@ -186,7 +246,9 @@ function logout() {
     localStorage.removeItem('user');
     localStorage.removeItem('schoolName');
     localStorage.removeItem('schoolId');
-    document.getElementById('loginPage').style.display = '';
+    const landingPage = document.getElementById('landingPage');
+    if (landingPage) landingPage.style.display = 'block';
+    document.getElementById('loginPage').style.display = 'none';
     const adminDash = document.getElementById('adminDashboard');
     const teacherDash = document.getElementById('teacherDashboard');
     const studentDash = document.getElementById('studentDashboard');
@@ -256,6 +318,8 @@ function resetAllSections() {
 }
 
 function showDashboard(role) {
+    const landingPage = document.getElementById('landingPage');
+    if (landingPage) landingPage.style.display = 'none';
     document.getElementById('loginPage').style.display = 'none';
     resetAllSections();
 
@@ -383,6 +447,17 @@ function showSection(section) {
 
     const err = document.getElementById('loginError');
     if (err) err.style.display = 'none';
+}
+
+function showLoginPanel() {
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+    showSection('login');
+}
+
+function showLandingPage() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('landingPage').style.display = 'block';
 }
 
 function showRegisterSchool(e) {

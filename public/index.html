@@ -15,8 +15,114 @@
 </head>
 
 <body>
+    <!-- ========== LANDING PAGE ========== -->
+    <div class="landing-page" id="landingPage">
+        <header class="landing-header">
+            <div class="container landing-nav-container">
+                <div class="landing-logo">
+                    <img src="images/school-logo.png" alt="Logo" width="40" height="40"
+                        style="margin-right:8px; border-radius:8px; object-fit: contain;">
+                    <div>
+                        <h1>VIDYA HMS</h1>
+                        <p>School Management System</p>
+                    </div>
+                </div>
+                <nav class="landing-nav">
+                    <a href="#" class="active">Home</a>
+                    <a href="#">Features</a>
+                    <a href="#">Pricing</a>
+                    <a href="#">About</a>
+                    <a href="#">Contact</a>
+                </nav>
+                <div class="landing-header-btns">
+                    <button class="btn btn-outline" style="border-radius:100px; padding:10px 24px; font-weight:600;"
+                        onclick="showLoginPanel()">Login</button>
+                    <button class="btn btn-primary" style="border-radius:100px; padding:10px 24px; font-weight:600;"
+                        onclick="showLoginPanel(); showSection('registerSchool');">Start Free Trial</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="landing-hero container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Smart School Management<br>
+                    <span class="hero-highlight">Made Simple</span>
+                </h1>
+                <p class="hero-subtitle">Manage Fees, Attendance, Results & Staff in One Place</p>
+                <div class="hero-badges">
+                    <span class="l-badge"><i class="fas fa-cloud text-blue" style="color:var(--primary-600)"></i>
+                        Cloud-Based</span>
+                    <span class="l-badge"><i class="fas fa-rupee-sign text-blue" style="color:var(--primary-600)"></i> ₹
+                        £ Currency</span>
+                    <span class="l-badge"><i class="fas fa-mobile-alt text-blue" style="color:var(--primary-600)"></i>
+                        Mobile Friendly</span>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary"
+                        style="margin-right:16px; border-radius:100px; padding:14px 28px; font-size:16px; border:none; box-shadow:0 4px 15px rgba(37,99,235,0.3); cursor:pointer; color:white; background:linear-gradient(135deg,var(--primary-500),var(--primary-600));"
+                        onclick="showLoginPanel(); showSection('registerSchool');">Start Free Demo</button>
+                    <button class="btn btn-outline"
+                        style="border-radius:100px; padding:14px 28px; font-size:16px; border:2px solid var(--gray-200); background:white; color:var(--gray-700); cursor:pointer;"
+                        onclick="showLoginPanel(); showSection('registerSchool');"><i class="fas fa-headset"></i> Book a
+                        Demo</button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="images/dashboard-mockup.png" alt="Dashboard Mockup">
+            </div>
+        </section>
+
+        <section class="landing-features container">
+            <h2 class="features-title">Everything You Need to Run Your School Digitally</h2>
+            <div class="features-layout">
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-blue"><i class="fas fa-laptop-code"></i></div>
+                        <h3>Smart Dashboard</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon bg-yellow"><i class="fas fa-sack-dollar"></i></div>
+                        <h3>Fee Management</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon bg-green"><i class="fas fa-clipboard-user"></i></div>
+                        <h3>Attendance</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon bg-green-alt"><i class="fas fa-file-signature"></i></div>
+                        <h3>Result Management</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon bg-blue-alt"><i class="fas fa-chalkboard-teacher"></i></div>
+                        <h3>Teacher Panel</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon bg-orange"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <h3>Accountant Panel</h3>
+                    </div>
+                </div>
+                <div class="features-illustration">
+                    <img src="images/school-building.png" alt="School Mascot">
+                </div>
+            </div>
+        </section>
+
+        <!-- Decorative bg blur for landing -->
+        <div
+            style="position:absolute; top:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle, rgba(59,130,246,0.1), transparent 70%); z-index:-1; pointer-events:none;">
+        </div>
+        <div
+            style="position:absolute; bottom:0; right:-200px; width:800px; height:800px; background:radial-gradient(circle, rgba(59,130,246,0.08), transparent 70%); z-index:-1; pointer-events:none;">
+        </div>
+    </div>
+
     <!-- ========== LOGIN PAGE ========== -->
-    <div class="login-page" id="loginPage">
+    <div class="login-page" id="loginPage" style="display:none;">
+        <button onclick="showLandingPage()"
+            style="position:absolute; top:24px; left:24px; z-index:100; padding:10px 20px; border-radius:100px; border:none; background:rgba(255,255,255,0.15); color:white; backdrop-filter:blur(8px); cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px;"><i
+                class="fas fa-arrow-left"></i> Home</button>
+
         <div class="login-container">
             <div class="login-card">
                 <div class="login-logo">
@@ -98,7 +204,8 @@
 
                 <div class="login-error" id="loginError"></div>
 
-                <form class="login-form" id="loginSection" class="login-form auth-section" onsubmit="handleLogin(event)">
+                <form class="login-form" id="loginSection" class="login-form auth-section"
+                    onsubmit="handleLogin(event)">
                     <!-- Hidden role input for admin by default -->
                     <input type="hidden" id="hiddenLoginRole" value="admin">
 
@@ -142,8 +249,8 @@
                 </form>
 
                 <!-- Forgot Password Form -->
-                <form class="login-form" id="forgotPasswordSection" class="login-form auth-section" style="display:none;"
-                    onsubmit="handleForgotPassword(event)">
+                <form class="login-form" id="forgotPasswordSection" class="login-form auth-section"
+                    style="display:none;" onsubmit="handleForgotPassword(event)">
                     <div class="form-group" id="forgotSchoolWrapper">
                         <label for="forgotSchoolName">School Name</label>
                         <div class="input-wrapper">
@@ -218,8 +325,8 @@
                 </form>
 
                 <!-- Register School Form -->
-                <form class="login-form" id="registerSchoolSection" class="login-form auth-section" style="display:none;"
-                    onsubmit="handleRegisterSchool(event)">
+                <form class="login-form" id="registerSchoolSection" class="login-form auth-section"
+                    style="display:none;" onsubmit="handleRegisterSchool(event)">
                     <div class="form-group">
                         <label for="regSchoolName">School Name</label>
                         <div class="input-wrapper">
@@ -293,34 +400,34 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Main</div>
-                    <div class="nav-item active" onclick="showSection('adminHome', this)">
+                    <div class="nav-item active" onclick="showAdminSection('adminHome', this)">
                         <span class="nav-icon"><i class="fas fa-th-large"></i></span>
                         Dashboard
                     </div>
                 </div>
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
-                    <div class="nav-item" onclick="showSection('adminStudents', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminStudents', this)">
                         <span class="nav-icon"><i class="fas fa-user-graduate"></i></span>
                         Students
                     </div>
-                    <div class="nav-item" onclick="showSection('adminTeachers', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminTeachers', this)">
                         <span class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></span>
                         Teachers
                     </div>
-                    <div class="nav-item" onclick="showSection('adminFees', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminFees', this)">
                         <span class="nav-icon"><i class="fas fa-rupee-sign"></i></span>
                         Fee Management
                     </div>
-                    <div class="nav-item" onclick="showSection('adminAttendance', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminAttendance', this)">
                         <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
                         Attendance
                     </div>
-                    <div class="nav-item" onclick="showSection('adminResults', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminResults', this)">
                         <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
                         Results
                     </div>
-                    <div class="nav-item" onclick="showSection('adminAdmission', this)">
+                    <div class="nav-item" onclick="showAdminSection('adminAdmission', this)">
                         <span class="nav-icon"><i class="fas fa-user-plus"></i></span>
                         Admission
                     </div>
@@ -371,7 +478,7 @@
                     <!-- Quick Actions -->
                     <div class="quick-actions" id="adminQuickActions">
                         <div class="quick-action-btn"
-                            onclick="showSection('adminAdmission', document.querySelector('[onclick*=adminAdmission]'))">
+                            onclick="showAdminSection('adminAdmission', document.querySelector('[onclick*=adminAdmission]'))">
                             <div class="qa-icon" style="background:var(--primary-50);color:var(--primary-600)"><i
                                     class="fas fa-user-plus"></i></div>
                             New Admission
@@ -1412,7 +1519,7 @@
         </div>
     </div>
 
-    
+
     <!-- ========== ACCOUNTANT DASHBOARD ========== -->
     <div class="app-layout" id="accountantDashboard" style="display:none;">
         <div class="sidebar-overlay" onclick="toggleAccountantSidebar()"></div>
@@ -1455,7 +1562,8 @@
                     </div>
                 </div>
                 <div class="header-right">
-                    <button class="btn-logout" onclick="logout()"><i class="fas fa-power-off"></i> <span>Logout</span></button>
+                    <button class="btn-logout" onclick="logout()"><i class="fas fa-power-off"></i>
+                        <span>Logout</span></button>
                 </div>
             </header>
 
@@ -1466,12 +1574,13 @@
                         <h2>Welcome, <span id="accWelcomeName">Accountant</span>! 👋</h2>
                         <p>Here is the current financial overview.</p>
                     </div>
-                    
+
                     <div class="stats-grid" id="accStats"></div>
 
                     <div class="card mt-3">
                         <div class="card-header">
-                            <h2><i class="fas fa-clock" style="color:var(--accent-amber)"></i> Recent Fee Collections</h2>
+                            <h2><i class="fas fa-clock" style="color:var(--accent-amber)"></i> Recent Fee Collections
+                            </h2>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -1496,8 +1605,10 @@
                 <div class="section-page" id="accFees">
                     <div class="card">
                         <div class="card-header">
-                            <h2><i class="fas fa-rupee-sign" style="color:var(--accent-emerald)"></i> Fee Management</h2>
-                            <button class="btn btn-primary" onclick="openModal('addFeeModal')"><i class="fas fa-plus"></i> Create Fee</button>
+                            <h2><i class="fas fa-rupee-sign" style="color:var(--accent-emerald)"></i> Fee Management
+                            </h2>
+                            <button class="btn btn-primary" onclick="openModal('addFeeModal')"><i
+                                    class="fas fa-plus"></i> Create Fee</button>
                         </div>
                         <div class="card-body">
                             <div class="filter-bar">
@@ -1509,10 +1620,18 @@
                                 </select>
                                 <select class="form-control" id="accFilterFeeMonth" onchange="loadAccFees()">
                                     <option value="">All Months</option>
-                                    <option>January</option><option>February</option><option>March</option>
-                                    <option>April</option><option>May</option><option>June</option>
-                                    <option>July</option><option>August</option><option>September</option>
-                                    <option>October</option><option>November</option><option>December</option>
+                                    <option>January</option>
+                                    <option>February</option>
+                                    <option>March</option>
+                                    <option>April</option>
+                                    <option>May</option>
+                                    <option>June</option>
+                                    <option>July</option>
+                                    <option>August</option>
+                                    <option>September</option>
+                                    <option>October</option>
+                                    <option>November</option>
+                                    <option>December</option>
                                 </select>
                             </div>
                             <div class="table-responsive">
